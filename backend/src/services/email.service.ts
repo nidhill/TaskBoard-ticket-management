@@ -46,7 +46,7 @@ export const sendEmail = async ({ to, subject, html, text }: EmailOptions) => {
 };
 
 export const sendWelcomeEmail = async (email: string, name: string) => {
-    const subject = 'Welcome to ProjectFlow!';
+    const subject = 'Welcome to Slate!';
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #2662d9;">Welcome to Slate!</h1>

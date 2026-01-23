@@ -26,8 +26,13 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: 'http://Slate.socialhac.com', // Allow specific origin for production
-    credentials: false // Using Bearer token in headers, so cookies/credentials not strictly needed
+    origin: [
+        'http://Slate.socialhac.com',
+        'https://taskboard-frontend-o853.onrender.com',
+        'http://localhost:5173',
+        'http://localhost:5001'
+    ],
+    credentials: true // Enable credentials for all allowed origins
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

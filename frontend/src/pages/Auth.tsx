@@ -168,7 +168,7 @@ export default function Auth() {
             <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
               <FolderKanban className="w-7 h-7 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold text-foreground">ProjectFlow</span>
+            <span className="text-2xl font-bold text-foreground">Slate</span>
           </div>
 
           {/* Header */}

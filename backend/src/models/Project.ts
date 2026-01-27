@@ -11,7 +11,7 @@ export interface IProject extends Document {
     status: ProjectStatus;
     createdBy: mongoose.Types.ObjectId;
     assignedTo?: mongoose.Types.ObjectId;
-    projectHead: mongoose.Types.ObjectId;
+    projectHeads: mongoose.Types.ObjectId[];
     members: {
         user: mongoose.Types.ObjectId;
         role: 'developer' | 'designer' | 'manager' | 'qa' | 'other';
@@ -63,10 +63,16 @@ const projectSchema = new Schema<IProject>(
             type: String,
             trim: true,
         },
-        projectHead: {
-            type: Schema.Types.ObjectId,
+        projectHeads: {
+            type: [Schema.Types.ObjectId],
             ref: 'User',
-            required: [true, 'Project Head is required'],
+            required: [true, 'At least one Project Head is required'],
+            validate: {
+                validator: function (v: mongoose.Types.ObjectId[]) {
+                    return v && v.length > 0;
+                },
+                message: 'At least one Project Head is required'
+            }
         },
         members: [
             {

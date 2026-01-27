@@ -26,7 +26,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
             const userProjects = await Project.find({
                 $or: [
                     { createdBy: req.user!._id },
-                    { projectHead: req.user!._id },
+                    { projectHeads: req.user!._id },
                     { 'members.user': req.user!._id }
                 ]
             }).distinct('_id');
@@ -60,7 +60,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const task = await Task.findById(req.params.id)
-            .populate('projectId', 'name clientName projectHead')
+            .populate('projectId', 'name clientName projectHeads')
             .populate('assignedDeveloper', 'name email avatar_url');
 
         if (!task) {

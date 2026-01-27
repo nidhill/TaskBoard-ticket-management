@@ -591,7 +591,7 @@ export default function ProjectDetail() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Pages</p>
-                  <p className="text-2xl font-semibold">{project.tasksCount || 0}</p>
+                  <p className="text-2xl font-semibold">{tasks.length}</p>
                 </div>
               </CardContent>
             </Card>
@@ -640,11 +640,11 @@ export default function ProjectDetail() {
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-2">Progress</p>
                 <p className="text-2xl font-semibold mb-2">
-                  {project.tasksCount ? Math.round((project.completedTasks / project.tasksCount) * 100) : 0}%
+                  {tasks.length ? Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100) : 0}%
                 </p>
                 <ProgressBar
-                  value={project.completedTasks || 0}
-                  max={project.tasksCount || 1}
+                  value={tasks.filter(t => t.status === 'done').length}
+                  max={tasks.length || 1}
                   showLabel={false}
                 />
               </CardContent>

@@ -28,7 +28,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
             query.$or = [
                 { createdBy: user._id },
                 { assignedTo: user._id },
-                { projectHead: user._id },
+                { projectHeads: user._id },
                 { 'members.user': user._id }
             ];
         }
@@ -37,7 +37,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         const projects = await Project.find(query)
             .populate('createdBy', 'name email')
             .populate('assignedTo', 'name email') // Populate assigned dev
-            .populate('projectHead', 'name email')
+            .populate('projectHeads', 'name email')
             .sort({ createdAt: -1 });
 
         // Get counts for each project
@@ -63,7 +63,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
                     status: project.status,
                     createdBy: project.createdBy,
                     assignedTo: project.assignedTo,
-                    projectHead: project.projectHead,
+                    projectHeads: project.projectHeads,
                     department: project.department,
                     pagesCount,
                     completedPages,
@@ -94,7 +94,7 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
         const project = await Project.findById(req.params.id)
             .populate('createdBy', 'name email')
             .populate('assignedTo', 'name email')
-            .populate('projectHead', 'name email')
+            .populate('projectHeads', 'name email')
             .populate('members.user', 'name email avatar_url');
 
         if (!project) {
@@ -108,7 +108,9 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
         if (user.role === 'user') {
             const isCreator = (project.createdBy as any)._id?.toString() === user._id.toString();
             const isAssigned = (project.assignedTo as any)?._id?.toString() === user._id.toString();
-            const isProjectHead = (project.projectHead as any)?._id?.toString() === user._id.toString();
+            const isProjectHead = project.projectHeads.some((headId: any) =>
+                (headId._id ? headId._id.toString() : headId.toString()) === user._id.toString()
+            );
 
             const isMember = project.members.some((m: any) => {
                 // Handle populated user object or ID string
@@ -158,15 +160,15 @@ router.post(
     roleCheck(['admin', 'user']),
     async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const { name, description, clientName, startDate, deliveryDate, projectHead } = req.body;
+            const { name, description, clientName, startDate, deliveryDate, projectHeads } = req.body;
 
             if (!name) {
                 res.status(400).json({ message: 'Please provide project name' });
                 return;
             }
 
-            if (!projectHead) {
-                res.status(400).json({ message: 'Please provide a Project Head' });
+            if (!projectHeads || !Array.isArray(projectHeads) || projectHeads.length === 0) {
+                res.status(400).json({ message: 'Please provide at least one Project Head' });
                 return;
             }
 
@@ -179,7 +181,7 @@ router.post(
                 status: 'pending', // Starts as pending approval
                 department: req.user!.department,
                 createdBy: req.user!._id,
-                projectHead,
+                projectHeads,
                 members: [
                     ...(req.body.members || []),
                     // Auto-add creator if not already in list
@@ -189,15 +191,18 @@ router.post(
                 ],
             });
 
-            // Send email to Project Head
-            const headUser = await User.findById(projectHead);
-            if (headUser && headUser.email) {
-                try {
-                    await sendProjectApprovalRequest(headUser.email, project.name, req.user!.name, project._id.toString());
-                } catch (emailErr) {
-                    console.error('Failed to send approval request email', emailErr);
+            // Send email to all Project Heads
+            const headUsers = await User.find({ _id: { $in: projectHeads } });
+            const headEmailPromises = headUsers.map(async (headUser) => {
+                if (headUser.email) {
+                    try {
+                        await sendProjectApprovalRequest(headUser.email, project.name, req.user!.name, project._id.toString());
+                    } catch (emailErr) {
+                        console.error('Failed to send approval request email', emailErr);
+                    }
                 }
-            }
+            });
+            Promise.all(headEmailPromises).catch(err => console.error('Error sending approval emails:', err));
 
             // Send email to Team Members
             if (project.members && project.members.length > 0) {
@@ -205,8 +210,8 @@ router.post(
                 const members = await User.find({ _id: { $in: memberIds } });
 
                 const memberNotificationPromises = members.map(async (member) => {
-                    // Skip if member is the creator (already knows) or project head (already emailed)
-                    if (member._id.toString() === req.user!._id.toString() || member._id.toString() === projectHead) return;
+                    // Skip if member is the creator (already knows) or any project head (already emailed)
+                    if (member._id.toString() === req.user!._id.toString() || projectHeads.includes(member._id.toString())) return;
 
                     const memberRole = project.members.find((m: any) => m.user.toString() === member._id.toString())?.role || 'member';
 
@@ -255,8 +260,8 @@ router.put(
             // Check permissions for updates
             if (user.role === 'user') {
                 const isCreator = project.createdBy._id.toString() === user._id.toString();
-                // Check if projectHead matches user (project.projectHead is an ID here as it's not populated)
-                const isProjectHead = project.projectHead?.toString() === user._id.toString();
+                // Check if user is one of the project heads
+                const isProjectHead = project.projectHeads.some((headId: any) => headId.toString() === user._id.toString());
 
                 if (!isCreator && !isProjectHead) {
                     res.status(403).json({ message: 'Access denied. Only creator or project head can edit.' });
@@ -338,12 +343,12 @@ router.patch(
             }
 
             const user = req.user!;
-            // Only Project Head or Admin can approve/reject
-            const isProjectHead = project.projectHead?.toString() === user._id.toString();
+            // Only any one of the Project Heads or Admin can approve/reject
+            const isProjectHead = project.projectHeads.some((headId: any) => headId.toString() === user._id.toString());
             const isAdmin = user.role === 'admin';
 
             if (!isProjectHead && !isAdmin) {
-                res.status(403).json({ message: 'Access denied. Only Project Head can approve/reject.' });
+                res.status(403).json({ message: 'Access denied. Only Project Heads can approve/reject.' });
                 return;
             }
 

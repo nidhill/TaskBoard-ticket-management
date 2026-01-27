@@ -48,7 +48,7 @@ export default function Board() {
     const [loading, setLoading] = useState(true);
     const [activeTask, setActiveTask] = useState<Task | null>(null);
     const [selectedProject, setSelectedProject] = useState<string>('all');
-    const [viewMode, setViewMode] = useState<ViewMode>('table');
+    const [viewMode, setViewMode] = useState<ViewMode>('board');
     const [groupBy, setGroupBy] = useState<GroupBy>('none');
 
     const sensors = useSensors(

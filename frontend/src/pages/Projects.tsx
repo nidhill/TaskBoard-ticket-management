@@ -45,10 +45,10 @@ interface Project {
     _id: string;
     name: string;
   };
-  projectHead?: {
+  projectHeads?: {
     _id: string;
     name: string;
-  };
+  }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -222,13 +222,13 @@ export default function Projects() {
             <CardContent className="p-6">
               {/* Delete Button (Absolute for Tech Admin) */}
               {(user?.role === 'admin' || (user?.id === project.createdBy?._id && project.status === 'draft')) && (
-                <div className="absolute top-4 right-4 z-10">
+                <div className="absolute bottom-3 right-3 z-10">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="destructive"
                         size="icon"
-                        className="h-8 w-8 rounded-full shadow-sm opacity-80 hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -282,12 +282,20 @@ export default function Projects() {
                       {project.createdBy?._id === user?.id ? 'You' : (project.createdBy?.name || 'Unknown')}
                     </p>
                   </div>
-                  {/* Show Project Head if pending or active */}
+                  {/* Show Project Heads if present */}
                   <div className="p-3 rounded-lg bg-muted/50">
                     <Users className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">Project Head</p>
+                    <p className="text-xs text-muted-foreground">Project Head{(project.projectHeads?.length || 0) > 1 ? 's' : ''}</p>
                     <p className="text-sm font-semibold truncate">
-                      {project.projectHead?._id === user?.id ? 'You' : (project.projectHead?.name || 'Pending')}
+                      {project.projectHeads && project.projectHeads.length > 0 ? (
+                        project.projectHeads.length === 1 ? (
+                          project.projectHeads[0]._id === user?.id ? 'You' : project.projectHeads[0].name
+                        ) : (
+                          `${project.projectHeads[0]._id === user?.id ? 'You' : project.projectHeads[0].name} +${project.projectHeads.length - 1}`
+                        )
+                      ) : (
+                        'Pending'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -309,7 +317,7 @@ export default function Projects() {
                   </div>
                 </div>
 
-                {project.status === 'pending' && user?.id === project.projectHead?._id ? (
+                {project.status === 'pending' && project.projectHeads?.some(head => head._id === user?.id) ? (
                   <div className="flex gap-2">
                     <Button
                       className="flex-1 bg-green-600 hover:bg-green-700"

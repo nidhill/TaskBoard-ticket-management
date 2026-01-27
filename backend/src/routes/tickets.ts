@@ -29,7 +29,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
             const userProjects = await Project.find({
                 $or: [
                     { createdBy: req.user!._id },
-                    { projectHead: req.user!._id },
+                    { projectHeads: req.user!._id },
                     { 'members.user': req.user!._id }
                 ]
             }).distinct('_id');

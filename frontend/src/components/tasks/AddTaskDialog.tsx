@@ -209,63 +209,102 @@ export function AddTaskDialog({ projectId, projectMembers, open, onOpenChange, o
                             />
                         </div>
 
+                        <FormField
+                            control={form.control}
+                            name="assignedDeveloper"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Assignee</FormLabel>
+                                    <Popover open={openAssigneeCombo} onOpenChange={setOpenAssigneeCombo}>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                    variant="outline"
+                                                    role="combobox"
+                                                    className={cn(
+                                                        "justify-between pl-3 text-left font-normal",
+                                                        !field.value && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {field.value
+                                                        ? developers.find(d => d.value === field.value)?.label || "Select member..."
+                                                        : "Select member..."}
+                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="p-0" align="start">
+                                            <Command>
+                                                <CommandInput placeholder="Search team..." />
+                                                <CommandList>
+                                                    <CommandEmpty>No members found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {developers.map((dev) => (
+                                                            <CommandItem
+                                                                value={dev.label}
+                                                                key={dev.value}
+                                                                onSelect={() => {
+                                                                    form.setValue("assignedDeveloper", dev.value);
+                                                                    setOpenAssigneeCombo(false);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        dev.value === field.value
+                                                                            ? "opacity-100"
+                                                                            : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                <div className="flex flex-col">
+                                                                    <span>{dev.label}</span>
+                                                                    <span className="text-xs text-muted-foreground">{dev.email}</span>
+                                                                </div>
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
-                                name="assignedDeveloper"
+                                name="startDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Assignee</FormLabel>
-                                        <Popover open={openAssigneeCombo} onOpenChange={setOpenAssigneeCombo}>
+                                        <FormLabel>Start Date</FormLabel>
+                                        <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button
-                                                        variant="outline"
-                                                        role="combobox"
+                                                        variant={"outline"}
                                                         className={cn(
-                                                            "justify-between pl-3 text-left font-normal",
+                                                            "pl-3 text-left font-normal",
                                                             !field.value && "text-muted-foreground"
                                                         )}
                                                     >
-                                                        {field.value
-                                                            ? developers.find(d => d.value === field.value)?.label || "Select member..."
-                                                            : "Select member..."}
-                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                        {field.value ? (
+                                                            format(field.value, "PPP")
+                                                        ) : (
+                                                            <span>Pick a date</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
-                                            <PopoverContent className="p-0" align="start">
-                                                <Command>
-                                                    <CommandInput placeholder="Search team..." />
-                                                    <CommandList>
-                                                        <CommandEmpty>No members found.</CommandEmpty>
-                                                        <CommandGroup>
-                                                            {developers.map((dev) => (
-                                                                <CommandItem
-                                                                    value={dev.label}
-                                                                    key={dev.value}
-                                                                    onSelect={() => {
-                                                                        form.setValue("assignedDeveloper", dev.value);
-                                                                        setOpenAssigneeCombo(false);
-                                                                    }}
-                                                                >
-                                                                    <Check
-                                                                        className={cn(
-                                                                            "mr-2 h-4 w-4",
-                                                                            dev.value === field.value
-                                                                                ? "opacity-100"
-                                                                                : "opacity-0"
-                                                                        )}
-                                                                    />
-                                                                    <div className="flex flex-col">
-                                                                        <span>{dev.label}</span>
-                                                                        <span className="text-xs text-muted-foreground">{dev.email}</span>
-                                                                    </div>
-                                                                </CommandItem>
-                                                            ))}
-                                                        </CommandGroup>
-                                                    </CommandList>
-                                                </Command>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    initialFocus
+                                                />
                                             </PopoverContent>
                                         </Popover>
                                         <FormMessage />
@@ -273,89 +312,48 @@ export function AddTaskDialog({ projectId, projectMembers, open, onOpenChange, o
                                 )}
                             />
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="startDate"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>Start Date</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                        <Button
-                                                            variant={"outline"}
-                                                            className={cn(
-                                                                "pl-3 text-left font-normal",
-                                                                !field.value && "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            {field.value ? (
-                                                                format(field.value, "PPP")
-                                                            ) : (
-                                                                <span>Pick a date</span>
-                                                            )}
-                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                        </Button>
-                                                    </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={field.value}
-                                                        onSelect={field.onChange}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="dueDate"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>Due Date</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                        <Button
-                                                            variant={"outline"}
-                                                            className={cn(
-                                                                "pl-3 text-left font-normal",
-                                                                !field.value && "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            {field.value ? (
-                                                                format(field.value, "PPP")
-                                                            ) : (
-                                                                <span>Pick a date</span>
-                                                            )}
-                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                        </Button>
-                                                    </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={field.value}
-                                                        onSelect={field.onChange}
-                                                        disabled={(date) => {
-                                                            const startDate = form.getValues('startDate');
-                                                            return startDate ? date < startDate : date < new Date(new Date().setHours(0, 0, 0, 0));
-                                                        }}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                            <FormField
+                                control={form.control}
+                                name="dueDate"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Due Date</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "pl-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value ? (
+                                                            format(field.value, "PPP")
+                                                        ) : (
+                                                            <span>Pick a date</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date) => {
+                                                        const startDate = form.getValues('startDate');
+                                                        return startDate ? date < startDate : date < new Date(new Date().setHours(0, 0, 0, 0));
+                                                    }}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
                         <DialogFooter>

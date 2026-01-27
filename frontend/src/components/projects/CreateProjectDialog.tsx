@@ -53,7 +53,7 @@ const formSchema = z.object({
 
     startDate: z.string().optional(),
     deliveryDate: z.string().optional(),
-    projectHead: z.string().min(1, 'Project Head is required'),
+    projectHeads: z.array(z.string()).min(1, 'At least one Project Head is required'),
     members: z.array(z.object({
         user: z.string(),
         role: z.enum(['developer', 'designer', 'manager', 'qa', 'other'])
@@ -86,6 +86,8 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
     const [selectedRole, setSelectedRole] = useState<'developer' | 'designer' | 'manager' | 'qa' | 'other'>('developer');
     // Map to store details of selected users for display (ID -> User)
     const [selectedMembersDetails, setSelectedMembersDetails] = useState<Record<string, User>>({});
+    // Map to store details of selected project heads for display (ID -> User)
+    const [selectedHeadsDetails, setSelectedHeadsDetails] = useState<Record<string, User>>({});
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -95,7 +97,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
 
             startDate: '',
             deliveryDate: '',
-            projectHead: '',
+            projectHeads: [],
             members: [],
         },
     });
@@ -158,7 +160,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
                 <DialogHeader>
                     <DialogTitle>Create New Project</DialogTitle>
                     <DialogDescription>
-                        Details about the new project. The selected Project Head must approve it.
+                        Details about the new project. The selected Project Heads must approve it.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -220,70 +222,116 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
                             />
                         </div>
 
-                        <FormField
-                            control={form.control}
-                            name="projectHead"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Project Head *</FormLabel>
-                                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant="outline"
-                                                    role="combobox"
-                                                    aria-expanded={openCombobox}
-                                                    className={cn(
-                                                        "w-full justify-between",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value
-                                                        ? users.find((user) => user._id === field.value)?.name || "Select user..."
-                                                        : "Select project head..."}
-                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[400px] p-0">
-                                            <Command shouldFilter={false}>
-                                                <CommandInput placeholder="Search users by name or email..." onValueChange={setSearchQuery} />
-                                                <CommandList>
-                                                    {loadingUsers && <div className="py-6 text-center text-sm"><Loader2 className="h-4 w-4 animate-spin mx-auto" /></div>}
-                                                    {!loadingUsers && users.length === 0 && <CommandEmpty>No users found.</CommandEmpty>}
-                                                    <CommandGroup>
-                                                        {users.map((user) => (
+                        {/* Project Heads Section */}
+                        <div className="space-y-3">
+                            <FormLabel>Project Heads *</FormLabel>
+                            <div className="border rounded-md p-4 space-y-4">
+                                <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={openCombobox}
+                                            className="w-full justify-between"
+                                        >
+                                            Select project head to add...
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[400px] p-0">
+                                        <Command shouldFilter={false}>
+                                            <CommandInput placeholder="Search users by name or email..." onValueChange={setSearchQuery} />
+                                            <CommandList>
+                                                {loadingUsers && <div className="py-6 text-center text-sm"><Loader2 className="h-4 w-4 animate-spin mx-auto" /></div>}
+                                                {!loadingUsers && users.length === 0 && <CommandEmpty>No users found.</CommandEmpty>}
+                                                <CommandGroup>
+                                                    {users.map((user) => {
+                                                        const isAlreadyHead = form.getValues('projectHeads')?.includes(user._id);
+                                                        const isAlreadyMember = form.getValues('members')?.some(m => m.user === user._id);
+
+                                                        if (isAlreadyHead) return null;
+
+                                                        return (
                                                             <CommandItem
                                                                 value={user.name}
                                                                 key={user._id}
                                                                 onSelect={() => {
-                                                                    form.setValue("projectHead", user._id);
+                                                                    const currentHeads = form.getValues('projectHeads') || [];
+
+                                                                    // Update display details
+                                                                    setSelectedHeadsDetails(prev => ({
+                                                                        ...prev,
+                                                                        [user._id]: user
+                                                                    }));
+
+                                                                    form.setValue('projectHeads', [...currentHeads, user._id]);
                                                                     setOpenCombobox(false);
                                                                 }}
                                                             >
-                                                                <Check
-                                                                    className={cn(
-                                                                        "mr-2 h-4 w-4",
-                                                                        user._id === field.value
-                                                                            ? "opacity-100"
-                                                                            : "opacity-0"
-                                                                    )}
-                                                                />
                                                                 <div className="flex flex-col">
                                                                     <span>{user.name}</span>
                                                                     <span className="text-xs text-muted-foreground">{user.email}</span>
                                                                 </div>
                                                             </CommandItem>
-                                                        ))}
-                                                    </CommandGroup>
-                                                </CommandList>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                                                        );
+                                                    })}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+
+                                {/* Selected Project Heads List */}
+                                <FormField
+                                    control={form.control}
+                                    name="projectHeads"
+                                    render={({ field }) => (
+                                        <div className="space-y-2">
+                                            {field.value && field.value.length > 0 ? (
+                                                <div className="grid gap-2">
+                                                    {field.value.map((headId, index) => {
+                                                        const headDetails = selectedHeadsDetails[headId];
+                                                        const displayName = headDetails ? headDetails.name : `Head (ID: ${headId.slice(-4)})`;
+                                                        const displayEmail = headDetails ? headDetails.email : 'Unknown email';
+
+                                                        return (
+                                                            <div key={index} className="flex items-center justify-between p-2 bg-muted/40 rounded-md border">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                                                                        {displayName.charAt(0)}
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-sm font-medium">{displayName}</span>
+                                                                        <span className="text-xs text-muted-foreground">{displayEmail}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                                                    onClick={() => {
+                                                                        const newHeads = [...field.value!];
+                                                                        newHeads.splice(index, 1);
+                                                                        form.setValue('projectHeads', newHeads);
+                                                                    }}
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-4 text-sm text-muted-foreground border-2 border-dashed rounded-md">
+                                                    No project heads added
+                                                </div>
+                                            )}
+                                            <FormMessage />
+                                        </div>
+                                    )}
+                                />
+                            </div>
+                        </div>
 
                         {/* Team Members Section */}
                         <div className="space-y-3">
@@ -311,7 +359,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
                                                     <CommandGroup>
                                                         {users.map((user) => {
                                                             const isAlreadyMember = form.getValues('members')?.some(m => m.user === user._id);
-                                                            const isProjectHead = form.getValues('projectHead') === user._id;
+                                                            const isProjectHead = form.getValues('projectHeads')?.includes(user._id);
 
                                                             if (isAlreadyMember || isProjectHead) return null;
 

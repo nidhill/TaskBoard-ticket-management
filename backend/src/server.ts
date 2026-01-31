@@ -22,7 +22,7 @@ const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-// connectDB();
+connectDB();
 
 // Middleware
 app.use(cors());

@@ -1,23 +1,26 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-// import connectDB from './config/database'; // Disabled for debugging
+import connectDB from './config/database'; // Disabled for debugging
 
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
-// connectDB(); // Disabled for debugging
+connectDB(); // Disabled for debugging
 
 app.use(cors());
 app.use(express.json());
 
 // Health check route - minimal
 app.get('/api/health', (req: Request, res: Response) => {
+    const mongoose = require('mongoose');
     res.json({
         status: 'OK',
-        message: 'TaskBoard API is running (Minimal Mode)',
+        message: 'TaskBoard API is running (DB Test Mode)',
+        mongoStatus: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+        mongoState: mongoose.connection.readyState,
         timestamp: new Date().toISOString()
     });
 });

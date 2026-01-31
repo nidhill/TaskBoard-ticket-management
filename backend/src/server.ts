@@ -54,6 +54,15 @@ app.get('/api/health', (req: Request, res: Response) => {
     });
 });
 
+// Global Error Handler to calculate errors in Vercel
+app.use((err: any, req: Request, res: Response, next: any) => {
+    console.error('🔥 Server Error:', err);
+    res.status(500).json({
+        message: 'Internal Server Error',
+        error: err.message || 'Unknown Error'
+    });
+});
+
 // 404 handler
 app.use((req: Request, res: Response) => {
     res.status(404).json({ message: 'Route not found' });

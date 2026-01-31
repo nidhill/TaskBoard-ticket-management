@@ -42,10 +42,14 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 
 // Health check route
+// Health check route
 app.get('/api/health', (req: Request, res: Response) => {
+    const mongoose = require('mongoose');
     res.json({
         status: 'OK',
         message: 'TaskBoard API is running',
+        mongoStatus: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+        mongoState: mongoose.connection.readyState,
         timestamp: new Date().toISOString()
     });
 });

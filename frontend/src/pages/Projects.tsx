@@ -49,6 +49,10 @@ interface Project {
     _id: string;
     name: string;
   }[];
+  approvals?: {
+    head: string;
+    status: 'pending' | 'approved' | 'rejected';
+  }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -294,7 +298,7 @@ export default function Projects() {
                           `${project.projectHeads[0]._id === user?.id ? 'You' : project.projectHeads[0].name} +${project.projectHeads.length - 1}`
                         )
                       ) : (
-                        'Pending'
+                        'Unassigned'
                       )}
                     </p>
                   </div>
@@ -317,36 +321,63 @@ export default function Projects() {
                   </div>
                 </div>
 
-                {project.status === 'pending' && project.projectHeads?.some(head => head._id === user?.id) ? (
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      size="sm"
-                      disabled={isUpdatingStatus}
-                      onClick={() => handleUpdateStatus(project._id, 'active')}
-                    >
-                      {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-                      Approve
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      className="flex-1"
-                      size="sm"
-                      disabled={isUpdatingStatus}
-                      onClick={() => handleUpdateStatus(project._id, 'rejected')}
-                    >
-                      {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
-                      Reject
-                    </Button>
-                  </div>
-                ) : (
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link to={`/projects/${project._id}`}>
-                      View Details
-                      <ExternalLink className="w-4 h-4 ml-2" />
-                    </Link>
-                  </Button>
-                )}
+                {/* Approval Logic */}
+                {(() => {
+                  const userApproval = project.approvals?.find(a => a.head === user?.id);
+                  const isPendingForUser = project.status === 'pending' && userApproval?.status === 'pending';
+                  const approvalCount = project.approvals?.filter(a => a.status === 'approved').length || 0;
+                  const totalHeads = project.projectHeads?.length || 0;
+
+                  return (
+                    <div className="space-y-3">
+                      {/* Approval Status Bar */}
+                      {project.status === 'pending' && totalHeads > 0 && (
+                        <div className="flex flex-col gap-1 items-center">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Approval Progress: {approvalCount}/{totalHeads}
+                          </span>
+                          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary/60 transition-all duration-300"
+                              style={{ width: `${(approvalCount / totalHeads) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {isPendingForUser ? (
+                        <div className="flex gap-2">
+                          <Button
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            size="sm"
+                            disabled={isUpdatingStatus}
+                            onClick={() => handleUpdateStatus(project._id, 'active')}
+                          >
+                            {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                            Approve
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            className="flex-1"
+                            size="sm"
+                            disabled={isUpdatingStatus}
+                            onClick={() => handleUpdateStatus(project._id, 'rejected')}
+                          >
+                            {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
+                            Reject
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button variant="outline" className="w-full" asChild>
+                          <Link to={`/projects/${project._id}`}>
+                            View Details
+                            <ExternalLink className="w-4 h-4 ml-2" />
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>

@@ -94,6 +94,18 @@ export function DraggableTableRow({ task, onClick }: DraggableTableRowProps) {
                 <StatusPill status={task.status} />
             </td>
 
+            {/* Priority */}
+            <td className="px-4 py-3">
+                <span className={cn(
+                    "px-2 py-1 rounded-full text-xs font-medium border capitalize",
+                    task.priority === 'high' && "bg-orange-50 text-orange-700 border-orange-200",
+                    (task.priority === 'medium' || !task.priority) && "bg-blue-50 text-blue-700 border-blue-200",
+                    task.priority === 'low' && "bg-slate-50 text-slate-700 border-slate-200"
+                )}>
+                    {task.priority || 'medium'}
+                </span>
+            </td>
+
             {/* Tickets */}
             <td className="px-4 py-3">
                 <TicketBadge used={task.ticketUsed} max={task.maxTickets} />

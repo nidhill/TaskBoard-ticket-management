@@ -2,7 +2,7 @@ export type UserRole = 'admin' | 'user';
 
 export type TaskStatus = 'to_do' | 'in_progress' | 'in_review' | 'done';
 
-export type TicketIssueType = 'change_request' | 'dev_bug';
+export type TicketIssueType = 'change_request' | 'bug';
 
 export type TicketCategory = 'content' | 'design' | 'layout';
 
@@ -51,7 +51,7 @@ export interface Task {
   taskName: string;
   assignedDeveloper?: User;
   status: TaskStatus;
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  priority?: 'low' | 'medium' | 'high';
   startDate?: string;
   dueDate?: string;
   ticketUsed: number;
@@ -84,7 +84,7 @@ export interface Ticket {
   issueType: string; // Using string to be flexible or TicketIssueType
   category: string; // TicketCategory
   description: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: 'low' | 'medium' | 'high';
   status: TicketStatus;
   approvalReference?: string;
   attachments?: Attachment[];

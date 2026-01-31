@@ -19,10 +19,29 @@ export interface IProject extends Document {
     department?: string;
     approvedAt?: Date;
     rejectionReason?: string;
+    approvals?: {
+        head: mongoose.Types.ObjectId;
+        status: 'pending' | 'approved' | 'rejected';
+        date?: Date;
+        comment?: string;
+    }[];
+    attachments?: {
+        name: string;
+        url: string;
+        type: string;
+    }[];
+    urls?: string[];
 
     createdAt: Date;
     updatedAt: Date;
 }
+
+const approvalSchema = new Schema({
+    head: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    date: Date,
+    comment: String
+}, { _id: false });
 
 const projectSchema = new Schema<IProject>(
     {
@@ -95,6 +114,15 @@ const projectSchema = new Schema<IProject>(
             type: String,
             trim: true,
         },
+        approvals: [approvalSchema],
+        attachments: [
+            {
+                name: String,
+                url: String,
+                type: String
+            }
+        ],
+        urls: [String],
     },
     {
         timestamps: true,

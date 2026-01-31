@@ -53,7 +53,7 @@ interface Task {
         _id: string;
         name: string;
         clientName?: string;
-        projectHead?: string; // ID of the project head
+        projectHeads?: any[]; // IDs or User objects of the project heads
     };
     taskName: string;
     assignedDeveloper?: {
@@ -298,7 +298,7 @@ export default function TaskDetail() {
                                 <div className="flex items-center gap-3 mb-2">
                                     <h1 className="text-2xl font-bold">{task.taskName}</h1>
                                     {/* Status Dropdown for Assignee/Admin */}
-                                    {(user && (user.role === 'admin' || user.id === task.assignedDeveloper?._id || user.id === task.projectId?.projectHead)) ? (
+                                    {(user && (user.role === 'admin' || user.id === task.assignedDeveloper?._id || task.projectId?.projectHeads?.some((h: any) => (h._id || h) === user.id))) ? (
                                         <Select
                                             value={task.status}
                                             onValueChange={(val) => handleUpdateTaskStatus(val as TaskStatus)}
@@ -387,7 +387,7 @@ export default function TaskDetail() {
                             Tickets ({tickets.length})
                         </h2>
                         {/* Allow Admin, Project Head, and Non-Developers (QA, Manager, etc.) to create tickets */}
-                        {(user && (user.role === 'admin' || user.id === task.projectId?.projectHead || (projectRole && projectRole !== 'developer'))) && (
+                        {(user && (user.role === 'admin' || task.projectId?.projectHeads?.some((h: any) => (h._id || h) === user.id) || (projectRole && projectRole !== 'developer'))) && (
                             <Dialog open={isCreateTicketOpen} onOpenChange={setIsCreateTicketOpen}>
                                 <DialogTrigger asChild>
                                     <Button>
@@ -424,7 +424,6 @@ export default function TaskDetail() {
                                                         <SelectContent>
                                                             <SelectItem value="bug">Bug</SelectItem>
                                                             <SelectItem value="change_request">Change Request</SelectItem>
-                                                            <SelectItem value="enhancement">Enhancement</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
@@ -460,7 +459,6 @@ export default function TaskDetail() {
                                                         <SelectItem value="low">Low</SelectItem>
                                                         <SelectItem value="medium">Medium</SelectItem>
                                                         <SelectItem value="high">High</SelectItem>
-                                                        <SelectItem value="urgent">Urgent</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
@@ -530,9 +528,7 @@ export default function TaskDetail() {
                                                     <Badge variant="secondary" className="capitalize">
                                                         {ticket.category}
                                                     </Badge>
-                                                    {ticket.priority === 'urgent' && (
-                                                        <Badge variant="destructive">Urgent</Badge>
-                                                    )}
+                                                    {/* Removed urgent badge display */}
                                                 </div>
                                                 <p className="font-medium text-foreground">{ticket.description}</p>
                                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">

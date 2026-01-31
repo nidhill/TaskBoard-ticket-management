@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type TicketIssueType = 'change_request' | 'dev_bug' | 'bug' | 'enhancement';
+export type TicketIssueType = 'change_request' | 'bug';
 export type TicketCategory = 'content' | 'design' | 'layout' | 'functionality' | 'performance';
 export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'rejected';
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -33,7 +33,7 @@ const ticketSchema = new Schema<ITicket>(
         },
         issueType: {
             type: String,
-            enum: ['change_request', 'dev_bug', 'bug', 'enhancement'],
+            enum: ['bug', 'change_request'],
             required: [true, 'Issue type is required'],
         },
         category: {

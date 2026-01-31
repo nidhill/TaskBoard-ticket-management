@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import Ticket from '../models/Ticket';
 import Task from '../models/Task';
 import { protect, AuthRequest } from '../middleware/auth';
+import { sendNotification } from '../services/notification.service';
 import { logAudit } from '../services/audit.service';
 import Project from '../models/Project';
 import { sendTicketStatusNotification, sendTicketCreatedNotification } from '../services/email.service';
@@ -76,6 +77,15 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
             return;
         }
 
+        if (ticket.requestedBy.toString() !== req.user!._id.toString()) {
+            await sendNotification(
+                ticket.requestedBy,
+                'Ticket Status Updated',
+                `Your ticket "${ticket.description.substring(0, 30)}..." has been updated to ${req.body.status}.`,
+                req.body.status === 'resolved' ? 'success' : 'info'
+            );
+        }
+
         res.json({ success: true, ticket });
     } catch (error: any) {
         console.error('Get ticket error:', error);
@@ -141,6 +151,16 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
         const populatedTicket = await Ticket.findById(ticket._id)
             .populate('taskId', 'taskName')
             .populate('requestedBy', 'name email avatar_url');
+
+        // Notify Task Assignee (Developer)
+        if (task.assignedDeveloper && task.assignedDeveloper.toString() !== req.user!._id.toString()) {
+            await sendNotification(
+                task.assignedDeveloper,
+                'New Ticket Created',
+                `A new ticket "${description.substring(0, 30)}..." has been created by ${req.user!.name} on your task "${(task as any).taskName}".`,
+                'warning'
+            );
+        }
 
         // Send Email Notification to Team Members
         try {
@@ -219,6 +239,16 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
                 resourceId: ticket._id.toString(),
                 resourceType: 'Ticket'
             });
+
+            // Notify Requester
+            if (updatedTicket!.requestedBy && (updatedTicket!.requestedBy as any)._id.toString() !== req.user!._id.toString()) {
+                await sendNotification(
+                    (updatedTicket!.requestedBy as any)._id,
+                    'Ticket Status Updated',
+                    `Your ticket "${(updatedTicket as any).description?.substring(0, 30)}..." has been updated to ${req.body.status}.`,
+                    req.body.status === 'resolved' ? 'success' : 'info'
+                );
+            }
 
             // Send Email to Team Members
             try {

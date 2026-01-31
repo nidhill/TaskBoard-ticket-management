@@ -19,16 +19,18 @@ interface TaskTableViewProps {
     tasks: Task[];
     onTaskClick: (task: Task) => void;
     onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
+    sortField: SortField;
+    sortDirection: SortDirection;
+    onSortChange: (field: SortField, direction: SortDirection) => void;
 }
 
-type SortField = 'taskName' | 'projectId' | 'status' | 'updatedAt';
-type SortDirection = 'asc' | 'desc';
+export type SortField = 'taskName' | 'projectId' | 'status' | 'updatedAt' | 'priority';
+export type SortDirection = 'asc' | 'desc';
 
 const STATUS_ORDER: TaskStatus[] = ['to_do', 'in_progress', 'in_review', 'done'];
+const PRIORITY_ORDER: string[] = ['high', 'medium', 'low'];
 
-export function TaskTableView({ tasks, onTaskClick, onStatusChange }: TaskTableViewProps) {
-    const [sortField, setSortField] = useState<SortField>('updatedAt');
-    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+export function TaskTableView({ tasks, onTaskClick, onStatusChange, sortField, sortDirection, onSortChange }: TaskTableViewProps) {
     const [activeTask, setActiveTask] = useState<Task | null>(null);
 
     const sensors = useSensors(
@@ -41,10 +43,9 @@ export function TaskTableView({ tasks, onTaskClick, onStatusChange }: TaskTableV
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+            onSortChange(field, sortDirection === 'asc' ? 'desc' : 'asc');
         } else {
-            setSortField(field);
-            setSortDirection('asc');
+            onSortChange(field, 'asc');
         }
     };
 
@@ -67,6 +68,10 @@ export function TaskTableView({ tasks, onTaskClick, onStatusChange }: TaskTableV
             case 'updatedAt':
                 aVal = new Date(a.updatedAt).getTime();
                 bVal = new Date(b.updatedAt).getTime();
+                break;
+            case 'priority':
+                aVal = PRIORITY_ORDER.indexOf(a.priority || 'medium');
+                bVal = PRIORITY_ORDER.indexOf(b.priority || 'medium');
                 break;
             default:
                 return 0;
@@ -130,6 +135,9 @@ export function TaskTableView({ tasks, onTaskClick, onStatusChange }: TaskTableV
                                 <TableHead>Assignee</TableHead>
                                 <TableHead>
                                     <SortButton field="status">Status</SortButton>
+                                </TableHead>
+                                <TableHead>
+                                    <SortButton field="priority">Priority</SortButton>
                                 </TableHead>
                                 <TableHead>Tickets</TableHead>
                                 <TableHead>

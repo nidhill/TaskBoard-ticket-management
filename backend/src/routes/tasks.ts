@@ -3,6 +3,7 @@ import Task from '../models/Task';
 import Ticket from '../models/Ticket';
 import Project from '../models/Project';
 import { protect, AuthRequest } from '../middleware/auth';
+import { sendNotification } from '../services/notification.service';
 
 const router = Router();
 
@@ -80,7 +81,7 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 // @access  Private
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const { projectId, taskName, assignedDeveloper, status, description, priority, dueDate, startDate } = req.body;
+        const { projectId, taskName, assignedDeveloper, status, description, priority, dueDate, startDate, attachments, urls } = req.body;
 
         if (!projectId || !taskName) {
             res.status(400).json({ message: 'Please provide projectId and taskName' });
@@ -95,11 +96,22 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
             dueDate,
             startDate,
             assignedDeveloper,
+            attachments: attachments || [],
+            urls: urls || [],
             createdBy: req.user!._id,
             status: status || 'draft',
             ticketUsed: 0,
             maxTickets: 2,
         });
+
+        if (assignedDeveloper) {
+            await sendNotification(
+                assignedDeveloper,
+                'New Task Assigned',
+                `You have been assigned to task "${taskName}".`,
+                'info'
+            );
+        }
 
         await task.populate('createdBy', 'name email');
 

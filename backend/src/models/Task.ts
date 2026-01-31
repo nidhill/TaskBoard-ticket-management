@@ -15,6 +15,12 @@ export interface ITask extends Document {
     dueDate?: Date;
     startDate?: Date;
     approvalReference?: string;
+    attachments?: {
+        name: string;
+        url: string;
+        type: string;
+    }[];
+    urls?: string[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -77,6 +83,14 @@ const taskSchema = new Schema<ITask>(
             type: String,
             default: null,
         },
+        attachments: [
+            {
+                name: String,
+                url: String,
+                type: String
+            }
+        ],
+        urls: [String],
     },
     {
         timestamps: true,

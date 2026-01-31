@@ -84,7 +84,13 @@ interface ProjectDetail {
   status: string;
   tasksCount: number;
   completedTasks: number;
-  projectHead?: { name: string; email: string } | string;
+  projectHeads?: { _id: string; name: string; email: string }[] | string[];
+  approvals?: {
+    head: string;
+    status: 'pending' | 'approved' | 'rejected';
+    date?: string;
+    comment?: string;
+  }[];
   createdBy?: { _id: string; name: string; email: string } | string;
   members?: { user: { _id: string; name: string; email: string; avatar_url?: string } | string; role: string }[];
 }
@@ -407,9 +413,10 @@ export default function ProjectDetail() {
 
   // const { user } = useAuth(); // Moved to top level
 
-  const isProjectHead = project && user && (
-    (typeof project.projectHead === 'string' && project.projectHead === user.id) ||
-    (typeof project.projectHead === 'object' && (project.projectHead as any)._id === user.id)
+  const isProjectHead = project && user && project.projectHeads && (
+    Array.isArray(project.projectHeads) && project.projectHeads.some((head: any) =>
+      (typeof head === 'string' ? head === user.id : head._id === user.id)
+    )
   );
 
   const isProjectActive = project?.status === 'active';
@@ -700,7 +707,7 @@ export default function ProjectDetail() {
                             const isAdded = project.members?.some(m => {
                               const mId = (m.user as any)._id || m.user;
                               return mId === user._id;
-                            }) || (project.projectHead as any)?._id === user._id;
+                            }) || (project.projectHeads as any[])?.some((h: any) => (h._id || h) === user._id);
 
                             return (
                               <CommandItem
@@ -732,19 +739,35 @@ export default function ProjectDetail() {
             <CardContent>
               <div className="space-y-4">
                 {/* Project Head */}
-                {project.projectHead && (
-                  <div className="flex items-center gap-3 p-2 rounded-lg bg-primary/5 border border-primary/10">
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                        {typeof project.projectHead === 'object' ? (project.projectHead as any).name?.charAt(0) : 'H'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="overflow-hidden flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {typeof project.projectHead === 'object' ? (project.projectHead as any).name : 'Project Head'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Project Head</p>
-                    </div>
+                {/* Project Heads */}
+                {project.projectHeads && project.projectHeads.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {project.projectHeads.map((head: any, index: number) => {
+                      const headId = typeof head === 'object' ? head._id : head;
+                      const approval = project.approvals?.find(a => a.head === headId);
+                      const status = approval?.status || 'pending';
+
+                      return (
+                        <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-primary/5 border border-primary/10">
+                          <Avatar className="w-8 h-8">
+                            <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                              {typeof head === 'object' ? head.name?.charAt(0) : 'H'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="overflow-hidden flex-1">
+                            <p className="text-sm font-medium truncate">
+                              {typeof head === 'object' ? head.name : 'Project Head'}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              {/* <p className="text-xs text-muted-foreground">Project Head</p> */}
+                              {status === 'approved' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">Approved</span>}
+                              {status === 'rejected' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 border border-red-500/20">Rejected</span>}
+                              {status === 'pending' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/20">Pending</span>}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 

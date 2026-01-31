@@ -6,6 +6,7 @@ import { protect, AuthRequest } from '../middleware/auth';
 import { roleCheck } from '../middleware/roleCheck';
 import { logAudit } from '../services/audit.service';
 import { sendProjectApprovedEmail, sendProjectApprovalRequest, sendProjectMemberNotification, sendProjectStatusNotification } from '../services/email.service';
+import { sendNotification, sendNotifications } from '../services/notification.service';
 import User from '../models/User';
 
 const router = Router();
@@ -160,7 +161,7 @@ router.post(
     roleCheck(['admin', 'user']),
     async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const { name, description, clientName, startDate, deliveryDate, projectHeads } = req.body;
+            const { name, description, clientName, startDate, deliveryDate, projectHeads, attachments, urls } = req.body;
 
             if (!name) {
                 res.status(400).json({ message: 'Please provide project name' });
@@ -178,10 +179,16 @@ router.post(
                 clientName: clientName || '',
                 startDate: startDate || new Date(),
                 deliveryDate: deliveryDate || new Date(),
+                attachments: attachments || [],
+                urls: urls || [],
                 status: 'pending', // Starts as pending approval
                 department: req.user!.department,
                 createdBy: req.user!._id,
                 projectHeads,
+                approvals: projectHeads.map((headId: string) => ({
+                    head: headId,
+                    status: 'pending'
+                })),
                 members: [
                     ...(req.body.members || []),
                     // Auto-add creator if not already in list
@@ -204,11 +211,31 @@ router.post(
             });
             Promise.all(headEmailPromises).catch(err => console.error('Error sending approval emails:', err));
 
+            // Notify Project Heads
+            await sendNotifications(
+                projectHeads,
+                'New Project Approval Request',
+                `You have been assigned as a Project Head for "${project.name}". Please review and approve.`,
+                'info'
+            );
+
             // Send email to Team Members
             if (project.members && project.members.length > 0) {
                 const memberIds = project.members.map((m: any) => m.user);
-                const members = await User.find({ _id: { $in: memberIds } });
 
+                // Filter out creator and project heads for notifications
+                const membersToNotify = memberIds.filter((mId: any) =>
+                    mId.toString() !== req.user!._id.toString() && !projectHeads.includes(mId.toString())
+                );
+
+                await sendNotifications(
+                    membersToNotify,
+                    'Added to Project',
+                    `You have been added to project "${project.name}".`,
+                    'info'
+                );
+
+                const members = await User.find({ _id: { $in: memberIds } });
                 const memberNotificationPromises = members.map(async (member) => {
                     // Skip if member is the creator (already knows) or any project head (already emailed)
                     if (member._id.toString() === req.user!._id.toString() || projectHeads.includes(member._id.toString())) return;
@@ -296,6 +323,14 @@ router.put(
                 try {
                     const fullProject = await Project.findById(project._id).populate('members.user', 'name email');
                     if (fullProject && fullProject.members) {
+                        const memberIds = fullProject.members.map((m: any) => m.user._id || m.user);
+                        await sendNotifications(
+                            memberIds,
+                            'Project Status Updated',
+                            `Project "${project.name}" status has been updated to ${updates.status}.`,
+                            updates.status === 'active' ? 'success' : 'info'
+                        );
+
                         const emailPromises = fullProject.members.map(async (m: any) => {
                             if (m.user && m.user.email) {
                                 return sendProjectStatusNotification(m.user.email, m.user.name, project.name, updates.status);
@@ -358,8 +393,53 @@ router.patch(
                 return;
             }
 
-            project.status = status;
-            if (status === 'active') {
+            // If Admin, they can force the status
+            if (isAdmin) {
+                project.status = status;
+                if (status === 'rejected') project.rejectionReason = rejectionReason;
+            } else {
+                // If Project Head, update their specific approval record
+                // Initialize approvals if missing (for legacy data)
+                if (!project.approvals || project.approvals.length === 0) {
+                    project.approvals = project.projectHeads.map((headId: any) => ({
+                        head: headId,
+                        status: 'pending'
+                    }));
+                }
+
+                const approvalIndex = project.approvals.findIndex(
+                    (a: any) => a.head.toString() === user._id.toString()
+                );
+
+                if (approvalIndex === -1) {
+                    res.status(403).json({ message: 'You are not a Project Head for this project' });
+                    return;
+                }
+
+                // Update individual approval
+                project.approvals[approvalIndex].status = status === 'active' ? 'approved' : 'rejected';
+                project.approvals[approvalIndex].date = new Date();
+                if (rejectionReason) {
+                    project.approvals[approvalIndex].comment = rejectionReason;
+                }
+
+                // Check if ALL heads have approved
+                const allApproved = project.approvals.every((a: any) => a.status === 'approved');
+                const anyRejected = project.approvals.some((a: any) => a.status === 'rejected');
+
+                if (anyRejected) {
+                    project.status = 'rejected';
+                    project.rejectionReason = rejectionReason || 'Rejected by one or more Project Heads';
+                } else if (allApproved) {
+                    project.status = 'active';
+                } else {
+                    // Still pending others
+                    project.status = 'pending';
+                }
+            }
+
+            // Only perform activation actions if status actually changed to active
+            if (project.status === 'active' && !project.approvedAt) {
                 project.approvedAt = new Date();
                 // Send email to Creator
                 const creator = await User.findById(project.createdBy);
@@ -375,6 +455,15 @@ router.patch(
                 try {
                     const fullProject = await Project.findById(project._id).populate('members.user', 'name email');
                     if (fullProject && fullProject.members) {
+                        const memberIds = fullProject.members.map((m: any) => m.user._id || m.user);
+                        // Notify creator specifically if needed, but members list usually handles it if they are member
+                        await sendNotifications(
+                            memberIds,
+                            'Project Active',
+                            `Project "${project.name}" is now Active!`,
+                            'success'
+                        );
+
                         const emailPromises = fullProject.members.map(async (m: any) => {
                             if (m.user && m.user.email && m.user._id.toString() !== creator?._id.toString()) {
                                 return sendProjectStatusNotification(m.user.email, m.user.name, project.name, status);
@@ -385,8 +474,9 @@ router.patch(
                 } catch (emailErr) {
                     console.error('Failed to send project activation emails', emailErr);
                 }
-            } else if (status === 'rejected') {
-                project.rejectionReason = rejectionReason;
+            } else if (project.status === 'rejected') {
+                // If just rejected, we might want to notify creator too? 
+                // Using existing logic which sets rejectionReason
             }
 
             await project.save();
@@ -394,7 +484,7 @@ router.patch(
             await logAudit({
                 userId: user._id.toString(),
                 action: 'UPDATE_PROJECT_STATUS',
-                details: `Project ${project.name} status updated to ${status}`,
+                details: `Project ${project.name} status updated to ${project.status} (User approval: ${status})`,
                 resourceId: project._id.toString(),
                 resourceType: 'Project'
             });

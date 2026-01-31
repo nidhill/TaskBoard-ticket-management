@@ -10,13 +10,13 @@ import {
 } from '@dnd-kit/core';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { Loader2, LayoutGrid, Table2, Kanban, Layers, Users, Flag, Briefcase } from 'lucide-react';
+import { Loader2, LayoutGrid, Table2, Kanban, Layers, Users, Flag, Briefcase, ArrowUpAZ, ArrowDownAZ } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Task, TaskStatus } from '@/types';
 import { KanbanColumn } from '@/components/board/KanbanColumn';
 import { KanbanCard } from '@/components/board/KanbanCard';
 import { BoardSwimlane } from '@/components/board/BoardSwimlane';
-import { TaskTableView } from '@/components/board/TaskTableView';
+import { TaskTableView, SortField, SortDirection } from '@/components/board/TaskTableView';
 import api from '@/services/api';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -50,6 +50,10 @@ export default function Board() {
     const [selectedProject, setSelectedProject] = useState<string>('all');
     const [viewMode, setViewMode] = useState<ViewMode>('board');
     const [groupBy, setGroupBy] = useState<GroupBy>('none');
+
+    // Sort State for Table View
+    const [sortField, setSortField] = useState<SortField>('updatedAt');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -224,7 +228,7 @@ export default function Board() {
         }
 
         if (groupBy === 'priority') {
-            const priorities = ['urgent', 'high', 'medium', 'low'];
+            const priorities = ['high', 'medium', 'low'];
             return priorities.map(p => ({
                 id: p,
                 title: p.charAt(0).toUpperCase() + p.slice(1),
@@ -247,13 +251,15 @@ export default function Board() {
         );
     }
 
-    const allTasks = selectedProject === 'all'
-        ? tasks
-        : tasks.filter(task =>
-            typeof task.projectId === 'object'
-                ? task.projectId._id === selectedProject
-                : task.projectId === selectedProject
-        );
+    const allTasks = tasks.filter(task => {
+        // Project Filter
+        if (selectedProject !== 'all') {
+            const pId = typeof task.projectId === 'object' ? task.projectId._id : task.projectId;
+            if (pId !== selectedProject) return false;
+        }
+
+        return true;
+    });
 
     return (
         <MainLayout>
@@ -308,6 +314,34 @@ export default function Board() {
                             </Select>
                         )}
 
+                        {/* Sort By Toggle (Table View) */}
+                        {viewMode === 'table' && (
+                            <div className="flex items-center gap-2">
+                                <Select value={sortField} onValueChange={(value) => setSortField(value as SortField)}>
+                                    <SelectTrigger className="w-[140px] h-9">
+                                        <ArrowUpAZ className="w-4 h-4 mr-2 text-muted-foreground" />
+                                        <SelectValue placeholder="Sort By" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="updatedAt">Updated Date</SelectItem>
+                                        <SelectItem value="priority">Priority</SelectItem>
+                                        <SelectItem value="status">Status</SelectItem>
+                                        <SelectItem value="taskName">Task Name</SelectItem>
+                                        <SelectItem value="projectId">Project</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-9 w-9"
+                                    onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                                    title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+                                >
+                                    {sortDirection === 'asc' ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownAZ className="h-4 w-4" />}
+                                </Button>
+                            </div>
+                        )}
+
                         {/* View Toggle */}
                         <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as ViewMode)}>
                             <ToggleGroupItem value="board" aria-label="Board view" className="gap-2 h-9">
@@ -339,6 +373,7 @@ export default function Board() {
                             </SelectContent>
                         </Select>
                     </div>
+
                     <div className="text-sm text-muted-foreground">
                         {allTasks.length} {allTasks.length === 1 ? 'task' : 'tasks'}
                     </div>
@@ -350,6 +385,12 @@ export default function Board() {
                 <TaskTableView
                     tasks={allTasks}
                     onTaskClick={handleCardClick}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSortChange={(field, direction) => {
+                        setSortField(field);
+                        setSortDirection(direction);
+                    }}
                     onStatusChange={async (taskId, newStatus) => {
                         const task = tasks.find(t => t._id === taskId);
                         if (!task || task.status === newStatus) return;

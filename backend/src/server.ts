@@ -30,7 +30,8 @@ app.use(cors({
         'http://Slate.socialhac.com',
         'https://taskboard-frontend-o853.onrender.com',
         'http://localhost:5173',
-        'http://localhost:5001'
+        'http://localhost:5001',
+        process.env.FRONTEND_URL as string
     ],
     credentials: true // Enable credentials for all allowed origins
 }));

@@ -400,84 +400,79 @@ export default function TaskDetail() {
                                         <DialogTitle>Create New Ticket</DialogTitle>
                                         <DialogDescription>
                                             Report an issue or request a change for this task.
-                                            {task.ticketUsed >= task.maxTickets && (
-                                                <div className="mt-2 flex items-center text-destructive text-sm bg-destructive/10 p-2 rounded">
-                                                    <AlertTriangle className="w-4 h-4 mr-2" />
-                                                    Ticket limit reached ({task.maxTickets}/{task.maxTickets})
-                                                </div>
-                                            )}
                                         </DialogDescription>
                                     </DialogHeader>
 
-                                    {task.ticketUsed < task.maxTickets ? (
-                                        <div className="space-y-4 py-4">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label>Issue Type</Label>
-                                                    <Select
-                                                        value={newTicket.issueType}
-                                                        onValueChange={(v) => setNewTicket({ ...newTicket, issueType: v })}
-                                                    >
-                                                        <SelectTrigger>
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="bug">Bug</SelectItem>
-                                                            <SelectItem value="change_request">Change Request</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label>Category</Label>
-                                                    <Select
-                                                        value={newTicket.category}
-                                                        onValueChange={(v) => setNewTicket({ ...newTicket, category: v })}
-                                                    >
-                                                        <SelectTrigger>
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="design">Design</SelectItem>
-                                                            <SelectItem value="functionality">Functionality</SelectItem>
-                                                            <SelectItem value="content">Content</SelectItem>
-                                                            <SelectItem value="performance">Performance</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                            </div>
-
+                                    <div className="space-y-4 py-4">
+                                        <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label>Priority</Label>
+                                                <Label>Issue Type</Label>
                                                 <Select
-                                                    value={newTicket.priority}
-                                                    onValueChange={(v) => setNewTicket({ ...newTicket, priority: v })}
+                                                    value={newTicket.issueType}
+                                                    onValueChange={(v) => setNewTicket({ ...newTicket, issueType: v })}
                                                 >
                                                     <SelectTrigger>
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <SelectItem value="low">Low</SelectItem>
-                                                        <SelectItem value="medium">Medium</SelectItem>
-                                                        <SelectItem value="high">High</SelectItem>
+                                                        <SelectItem value="bug">Bug (Unlimited)</SelectItem>
+                                                        <SelectItem value="change_request">Change Request (Max 2)</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-
                                             <div className="space-y-2">
-                                                <Label>Description</Label>
-                                                <Textarea
-                                                    placeholder="Describe the issue or request in detail..."
-                                                    className="min-h-[100px]"
-                                                    value={newTicket.description}
-                                                    onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                                                />
+                                                <Label>Category</Label>
+                                                <Select
+                                                    value={newTicket.category}
+                                                    onValueChange={(v) => setNewTicket({ ...newTicket, category: v })}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="design">Design</SelectItem>
+                                                        <SelectItem value="functionality">Functionality</SelectItem>
+                                                        <SelectItem value="content">Content</SelectItem>
+                                                        <SelectItem value="performance">Performance</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className="py-6 text-center text-muted-foreground">
-                                            Cannot create more tickets. Please contact the Department Head or wait for tickets to be resolved.
+
+                                        <div className="space-y-2">
+                                            <Label>Priority</Label>
+                                            <Select
+                                                value={newTicket.priority}
+                                                onValueChange={(v) => setNewTicket({ ...newTicket, priority: v })}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="low">Low</SelectItem>
+                                                    <SelectItem value="medium">Medium</SelectItem>
+                                                    <SelectItem value="high">High</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
-                                    )}
+
+                                        <div className="space-y-2">
+                                            <Label>Description</Label>
+                                            <Textarea
+                                                placeholder="Describe the issue or request in detail..."
+                                                className="min-h-[100px]"
+                                                value={newTicket.description}
+                                                onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                                            />
+                                        </div>
+
+                                        {newTicket.issueType === 'change_request' && task.ticketUsed >= task.maxTickets && (
+                                            <div className="flex items-center text-destructive text-sm bg-destructive/10 p-2 rounded">
+                                                <AlertTriangle className="w-4 h-4 mr-2" />
+                                                Change Request limit reached ({task.maxTickets}/{task.maxTickets}). You cannot create more change requests.
+                                            </div>
+                                        )}
+                                    </div>
 
                                     <DialogFooter>
                                         <Button variant="outline" onClick={() => setIsCreateTicketOpen(false)}>
@@ -485,7 +480,7 @@ export default function TaskDetail() {
                                         </Button>
                                         <Button
                                             onClick={handleCreateTicket}
-                                            disabled={isCreatingTicket || task.ticketUsed >= task.maxTickets}
+                                            disabled={isCreatingTicket || (newTicket.issueType === 'change_request' && task.ticketUsed >= task.maxTickets)}
                                         >
                                             {isCreatingTicket ? (
                                                 <>

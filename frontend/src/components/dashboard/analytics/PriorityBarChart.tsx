@@ -3,32 +3,33 @@ import { Task } from "@/types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface PriorityBarChartProps {
-    tasks: Task[];
+    stats: {
+        high: number;
+        medium: number;
+        low: number;
+    } | undefined;
 }
 
 const priorityColors: Record<string, string> = {
-    urgent: '#ef4444', // red
     high: '#f97316', // orange
     medium: '#eab308', // yellow
     low: '#3b82f6', // blue
 };
 
 const priorityLabels: Record<string, string> = {
-    urgent: 'Highest',
     high: 'High',
     medium: 'Medium',
     low: 'Low'
 };
 
-export function PriorityBarChart({ tasks }: PriorityBarChartProps) {
+export function PriorityBarChart({ stats }: PriorityBarChartProps) {
     const data = [
-        { name: 'urgent', value: tasks.filter(t => t.priority === 'urgent').length },
-        { name: 'high', value: tasks.filter(t => t.priority === 'high').length },
-        { name: 'medium', value: tasks.filter(t => t.priority === 'medium').length },
-        { name: 'low', value: tasks.filter(t => t.priority === 'low').length },
+        { name: 'high', value: stats?.high || 0 },
+        { name: 'medium', value: stats?.medium || 0 },
+        { name: 'low', value: stats?.low || 0 },
     ];
 
-    const total = tasks.length;
+    const total = (stats?.high || 0) + (stats?.medium || 0) + (stats?.low || 0);
 
     if (total === 0) {
         return (
@@ -78,7 +79,7 @@ export function PriorityBarChart({ tasks }: PriorityBarChartProps) {
                     {Object.keys(priorityLabels).map((priority) => (
                         <div key={priority} className="flex items-center gap-2 text-sm">
                             <span className="font-bold text-lg" style={{ color: priorityColors[priority] }}>
-                                {priority === 'urgent' ? '⌃' : priority === 'high' ? '^' : priority === 'medium' ? '=' : '⌄'}
+                                {priority === 'high' ? '^' : priority === 'medium' ? '=' : '⌄'}
                             </span>
                             <span className="text-muted-foreground" style={{ color: priorityColors[priority] }}>
                                 {priorityLabels[priority]}

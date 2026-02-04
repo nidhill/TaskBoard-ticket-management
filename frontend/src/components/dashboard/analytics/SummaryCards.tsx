@@ -4,36 +4,22 @@ import { CheckCircle2, Edit2, Plus, Calendar } from "lucide-react";
 import { subDays, isAfter, isBefore, addDays, startOfDay, endOfDay } from "date-fns";
 
 interface SummaryCardsProps {
-    tasks: Task[];
-    tickets: Ticket[];
+    stats: {
+        doneInLast7Days: number;
+        updatedInLast7Days: number;
+        createdInLast7Days: number;
+        dueInNext7Days: number;
+    } | undefined;
 }
 
-export function SummaryCards({ tasks, tickets }: SummaryCardsProps) {
-    const today = new Date();
-    const sevenDaysAgo = subDays(today, 7);
-    const sevenDaysFromNow = addDays(today, 7);
+export function SummaryCards({ stats }: SummaryCardsProps) {
+    // Stats are now passed in directly
+    const doneInLast7Days = stats?.doneInLast7Days || 0;
+    const updatedInLast7Days = stats?.updatedInLast7Days || 0;
+    const createdInLast7Days = stats?.createdInLast7Days || 0;
+    const dueInNext7Days = stats?.dueInNext7Days || 0;
 
-    // Filter Logic
-    const doneInLast7Days = tasks.filter(t =>
-        t.status === 'done' &&
-        new Date(t.updatedAt) >= sevenDaysAgo
-    ).length;
-
-    const updatedInLast7Days = tasks.filter(t =>
-        new Date(t.updatedAt) >= sevenDaysAgo
-    ).length;
-
-    const createdInLast7Days = tasks.filter(t =>
-        new Date(t.createdAt) >= sevenDaysAgo
-    ).length;
-
-    const dueInNext7Days = tasks.filter(t =>
-        t.dueDate &&
-        isAfter(new Date(t.dueDate), startOfDay(today)) &&
-        isBefore(new Date(t.dueDate), endOfDay(sevenDaysFromNow))
-    ).length;
-
-    const stats = [
+    const navStats = [
         {
             label: "done",
             subLabel: "in the last 7 days",
@@ -70,7 +56,7 @@ export function SummaryCards({ tasks, tickets }: SummaryCardsProps) {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {stats.map((stat, i) => (
+            {navStats.map((stat, i) => (
                 <Card key={i} className="glass-card shadow-sm hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                         <div className="flex flex-col h-full justify-between gap-4">

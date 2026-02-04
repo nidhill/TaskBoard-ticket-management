@@ -112,20 +112,15 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
             return;
         }
 
-        // Major Change Limit Logic (2 per Project)
+        // Change Request Limit Logic (2 per Task)
         if (issueType === 'change_request') {
-            // Find all tasks in this project to aggregate count
-            const projectTaskIds = await Task.find({ projectId: task.projectId }).distinct('_id');
+            const maxTickets = task.maxTickets || 2;
 
-            const majorTicketCount = await Ticket.countDocuments({
-                taskId: { $in: projectTaskIds },
-                issueType: 'change_request'
-            });
-
-            if (majorTicketCount >= 2) {
+            // Check if limit reached
+            if (task.ticketUsed >= maxTickets) {
                 res.status(400).json({
-                    message: 'Project Major Change limit reached (2/2). Please create a Development Ticket or contact Admin.',
-                    type: 'major_change_limit'
+                    message: `Task Ticket limit reached (${task.ticketUsed}/${maxTickets}). Change requests are limited to 2 per task. Bugs are unlimited.`,
+                    type: 'ticket_limit_reached'
                 });
                 return;
             }
@@ -144,9 +139,11 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
             status: 'open',
         });
 
-        // Increment ticket count on task (for analytics)
-        task.ticketUsed += 1;
-        await task.save();
+        // Increment ticket count on task ONLY for change requests
+        if (issueType === 'change_request') {
+            task.ticketUsed += 1;
+            await task.save();
+        }
 
         const populatedTicket = await Ticket.findById(ticket._id)
             .populate('taskId', 'taskName')
@@ -304,10 +301,12 @@ router.delete('/:id', async (req: AuthRequest, res: Response): Promise<void> => 
             return;
         }
 
-        // Decrement ticket count on task
-        await Task.findByIdAndUpdate(ticket.taskId, {
-            $inc: { ticketUsed: -1 }
-        });
+        // Decrement ticket count on task only if it was a change request
+        if (ticket.issueType === 'change_request') {
+            await Task.findByIdAndUpdate(ticket.taskId, {
+                $inc: { ticketUsed: -1 }
+            });
+        }
 
         await logAudit({
             userId: req.user!._id.toString(),

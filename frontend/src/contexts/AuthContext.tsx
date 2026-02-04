@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { authService, UserResponse } from '@/services/auth.service';
 
-export type AppRole = 'admin' | 'user';
+export type AppRole = 'admin' | 'user' | 'requester' | 'department_head' | 'developer' | 'tech_admin';
 
 interface Profile {
   id: string;

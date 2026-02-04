@@ -13,6 +13,7 @@ import userRoutes from './routes/users';
 import uploadRoutes from './routes/upload';
 import commentRoutes from './routes/comments';
 import auditLogRoutes from './routes/audit-logs';
+import dashboardRoutes from './routes/dashboard';
 
 // Load environment variables
 dotenv.config();
@@ -39,7 +40,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/comments', commentRoutes);
-app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Health check route
 app.get('/api/health', (req: Request, res: Response) => {
@@ -68,12 +69,10 @@ app.use((req: Request, res: Response) => {
 });
 
 // Start server
-if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`🚀 Server is running on port ${PORT}`);
-        console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-        console.log(`📡 API URL: http://localhost:${PORT}`);
-    });
-}
+app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+    console.log(`📡 API URL: http://localhost:${PORT}`);
+});
 
 export default app;

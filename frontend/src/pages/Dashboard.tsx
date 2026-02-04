@@ -46,23 +46,40 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [tickets, setTickets] = useState<TicketType[]>([]);
+  const [dashboardData, setDashboardData] = useState<any>({
+    projects: [],
+    recentTickets: [],
+    stats: null
+  });
+
+  // Derived state fallback to prevent crashes before load
+  const projects = dashboardData.projects;
+  const tickets = dashboardData.recentTickets; // This variable name conflict might be confusing, but 'tickets' in context was full list, now is recent.
+  // Actually, let's keep the names clear. The child components expect arrays.
+
+  // We need to pass "fake" arrays populated with just enough info for the charts if we don't refactor them.
+  // OR better: refactor the call below to pass the stats.
+
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [projectsRes, tasksRes, ticketsRes] = await Promise.all([
-          api.get('/projects'),
-          api.get('/tasks'),
-          api.get('/tickets')
-        ]);
+        const statsRes = await api.get('/dashboard/stats');
 
-        setProjects(projectsRes.data.projects || []);
-        setTasks(tasksRes.data.tasks || []);
-        setTickets(ticketsRes.data.tickets || []);
+        const { counts, recentTickets, activeProjects } = statsRes.data;
+
+        // Map backend stats to match the props expected by components (or refactor components - here we mock object structure to minimize component refactor)
+        // Actually, we will update the state to hold the stats directly
+        setDashboardData({
+          projects: activeProjects || [],
+          recentTickets: recentTickets || [],
+          stats: counts
+        });
+
+        // setProjects(projectsRes.data.projects || []);
+        // setTasks(tasksRes.data.tasks || []);
+        // setTickets(ticketsRes.data.tickets || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         toast({
@@ -78,10 +95,12 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  const activeProjects = projects.filter(p => p.status === 'active').length;
-  const pendingApprovals = tasks.filter(p => p.status === 'to_do').length;
-  const openTickets = tickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
-  const completedTasks = tasks.filter(p => p.status === 'done').length;
+  const activeProjectsCount = dashboardData.stats?.activeProjects || 0;
+  // pendingApprovals was tasks.to_do. 
+  const pendingApprovals = dashboardData.stats?.tasksByStatus?.to_do || 0;
+  // openTickets: open + in_progress
+  const openTickets = (dashboardData.stats?.ticketsByStatus?.open || 0) + (dashboardData.stats?.ticketsByStatus?.in_progress || 0);
+  const completedTasks = dashboardData.stats?.tasksByStatus?.done || 0;
 
   if (loading) {
     return (
@@ -131,7 +150,7 @@ export default function Dashboard() {
             )}
             {permissions.canCreatePage && (
               <Button variant="outline" size="sm" asChild>
-                <Link to="/projects">
+                <Link to="/tasks?create=true">
                   <FileText className="w-4 h-4 mr-2" />
                   Request Task
                 </Link>
@@ -139,7 +158,7 @@ export default function Dashboard() {
             )}
             {permissions.canCreateTicket && (
               <Button variant="outline" size="sm" asChild>
-                <Link to="/tickets">
+                <Link to="/tickets?create=true">
                   <Ticket className="w-4 h-4 mr-2" />
                   Raise Ticket
                 </Link>
@@ -147,7 +166,7 @@ export default function Dashboard() {
             )}
             {permissions.canApprovePage && (
               <Button variant="outline" size="sm" asChild>
-                <Link to="/tasks">
+                <Link to="/tasks?status=to_do">
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Review Approvals ({pendingApprovals})
                 </Link>
@@ -163,7 +182,7 @@ export default function Dashboard() {
             )}
             {permissions.canResolveTicket && (
               <Button variant="outline" size="sm" asChild>
-                <Link to="/tickets">
+                <Link to="/tickets?status=open">
                   <AlertTriangle className="w-4 h-4 mr-2" />
                   Resolve Tickets ({openTickets})
                 </Link>
@@ -174,26 +193,27 @@ export default function Dashboard() {
       )}
 
       {/* Summary Stats */}
-      <SummaryCards tasks={tasks} tickets={tickets} />
+      {/* We need to update SummaryCards to accept stats object */}
+      <SummaryCards stats={dashboardData.stats?.recentStats} />
 
       {/* Analytics Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <StatusDonutChart tasks={tasks} />
-        <PriorityBarChart tasks={tasks} />
+        <StatusDonutChart stats={dashboardData.stats?.tasksByStatus} />
+        <PriorityBarChart stats={dashboardData.stats?.tasksByPriority} />
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
         <div className="xl:col-span-2">
-          <ProjectsTable projects={projects} />
+          <ProjectsTable projects={dashboardData.projects} />
         </div>
         <div>
-          <TaskStatusOverview tasks={tasks} />
+          <TaskStatusOverview stats={dashboardData.stats?.tasksByStatus} />
         </div>
       </div>
 
       {/* Recent Tickets */}
-      <RecentTickets tickets={tickets} />
+      <RecentTickets tickets={dashboardData.recentTickets} />
     </MainLayout>
   );
 }

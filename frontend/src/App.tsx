@@ -62,6 +62,16 @@ const App = () => (
                 <Board />
               </ProtectedRoute>
             } />
+            <Route path="/tasks" element={
+              <ProtectedRoute>
+                <Tasks />
+              </ProtectedRoute>
+            } />
+            <Route path="/tickets" element={
+              <ProtectedRoute>
+                <Tickets />
+              </ProtectedRoute>
+            } />
             <Route path="/team" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <Team />

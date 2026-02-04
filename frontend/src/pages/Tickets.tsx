@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusPill } from '@/components/shared/StatusPill';
@@ -86,9 +87,30 @@ export default function Tickets() {
   const permissions = usePermissions();
   const { toast } = useToast();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   useEffect(() => {
     fetchTickets();
     fetchTasks();
+
+    // Check for create param
+    if (searchParams.get('create') === 'true') {
+      setIsDialogOpen(true);
+      // Clean up the URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('create');
+      setSearchParams(newParams, { replace: true });
+    }
+
+    // Check for status param
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      setStatusFilter(statusParam);
+      // Clean up the URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('status');
+      setSearchParams(newParams, { replace: true });
+    }
   }, []);
 
   const fetchTickets = async () => {

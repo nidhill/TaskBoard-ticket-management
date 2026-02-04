@@ -3,7 +3,12 @@ import { Task, TaskStatus } from "@/types";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
 
 interface StatusDonutChartProps {
-    tasks: Task[];
+    stats: {
+        to_do: number;
+        in_progress: number;
+        in_review: number;
+        done: number;
+    } | undefined;
 }
 
 const statusColors: Record<string, string> = {
@@ -20,15 +25,15 @@ const statusLabels: Record<string, string> = {
     done: 'Done'
 };
 
-export function StatusDonutChart({ tasks }: StatusDonutChartProps) {
+export function StatusDonutChart({ stats }: StatusDonutChartProps) {
     const data = [
-        { name: 'to_do', value: tasks.filter(t => t.status === 'to_do').length },
-        { name: 'in_progress', value: tasks.filter(t => t.status === 'in_progress').length },
-        { name: 'in_review', value: tasks.filter(t => t.status === 'in_review').length },
-        { name: 'done', value: tasks.filter(t => t.status === 'done').length },
+        { name: 'to_do', value: stats?.to_do || 0 },
+        { name: 'in_progress', value: stats?.in_progress || 0 },
+        { name: 'in_review', value: stats?.in_review || 0 },
+        { name: 'done', value: stats?.done || 0 },
     ].filter(item => item.value > 0);
 
-    const total = tasks.length;
+    const total = (stats?.to_do || 0) + (stats?.in_progress || 0) + (stats?.in_review || 0) + (stats?.done || 0);
 
     if (total === 0) {
         return (
@@ -85,7 +90,7 @@ export function StatusDonutChart({ tasks }: StatusDonutChartProps) {
 
                 <div className="space-y-3 mt-4">
                     {Object.keys(statusLabels).map((status) => {
-                        const count = tasks.filter(t => t.status === status).length;
+                        const count = (stats as any)?.[status] || 0;
                         if (count === 0 && total > 0) return null;
 
                         return (

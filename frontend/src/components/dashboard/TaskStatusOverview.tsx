@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Box } from 'lucide-react';
 
 interface TaskStatusOverviewProps {
-  tasks: Task[];
+  stats: Record<TaskStatus, number> | undefined;
 }
 
 const statusOrder: TaskStatus[] = [
@@ -28,13 +28,10 @@ const statusColors: Record<TaskStatus, string> = {
   done: 'bg-green-500'
 };
 
-export function TaskStatusOverview({ tasks }: TaskStatusOverviewProps) {
-  const statusCounts = statusOrder.reduce((acc, status) => {
-    acc[status] = tasks.filter(p => p.status === status).length;
-    return acc;
-  }, {} as Record<TaskStatus, number>);
+export function TaskStatusOverview({ stats }: TaskStatusOverviewProps) {
+  const statusCounts = stats || { to_do: 0, in_progress: 0, in_review: 0, done: 0 };
 
-  const total = tasks.length;
+  const total = Object.values(statusCounts).reduce((a, b) => a + b, 0);
 
   return (
     <Card className="glass-card h-full">

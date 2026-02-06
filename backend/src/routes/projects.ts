@@ -491,8 +491,13 @@ router.patch(
 
             res.json({ success: true, project });
         } catch (error: any) {
-            console.error('Update project status error:', error);
-            res.status(500).json({ message: 'Server error updating project status' });
+            console.error('Update project status error details:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name,
+                errors: error.errors // Mongoose validation errors
+            });
+            res.status(500).json({ message: 'Server error updating project status', error: error.message });
         }
     }
 );

@@ -747,24 +747,75 @@ export default function ProjectDetail() {
                       const approval = project.approvals?.find(a => a.head === headId);
                       const status = approval?.status || 'pending';
 
+                      // Check if current user is this project head
+                      const isCurrentUserHead = user && headId === user.id;
+
+                      const handleProjectApproval = async (newStatus: 'active' | 'rejected') => {
+                        try {
+                          // Use default rejection reason for now if rejected, could add dialog later
+                          await api.patch(`/projects/${project._id}/status`, {
+                            status: newStatus,
+                            rejectionReason: newStatus === 'rejected' ? 'Rejected by Project Head' : undefined
+                          });
+
+                          toast({
+                            title: newStatus === 'active' ? 'Project Approved' : 'Project Rejected',
+                            description: `You have successfully ${newStatus === 'active' ? 'approved' : 'rejected'} the project.`,
+                            variant: newStatus === 'active' ? 'default' : 'destructive'
+                          });
+
+                          fetchProjectDetails();
+                        } catch (error: any) {
+                          console.error('Error updating project status:', error);
+                          toast({
+                            title: 'Error',
+                            description: error.response?.data?.message || 'Failed to update project status',
+                            variant: 'destructive',
+                          });
+                        }
+                      };
+
                       return (
-                        <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-primary/5 border border-primary/10">
-                          <Avatar className="w-8 h-8">
-                            <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                              {typeof head === 'object' ? head.name?.charAt(0) : 'H'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="overflow-hidden flex-1">
-                            <p className="text-sm font-medium truncate">
-                              {typeof head === 'object' ? head.name : 'Project Head'}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              {/* <p className="text-xs text-muted-foreground">Project Head</p> */}
-                              {status === 'approved' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">Approved</span>}
-                              {status === 'rejected' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 border border-red-500/20">Rejected</span>}
-                              {status === 'pending' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/20">Pending</span>}
+                        <div key={index} className="flex flex-col gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                                {typeof head === 'object' ? head.name?.charAt(0) : 'H'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="overflow-hidden flex-1">
+                              <p className="text-sm font-medium truncate">
+                                {typeof head === 'object' ? head.name : 'Project Head'}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                {/* <p className="text-xs text-muted-foreground">Project Head</p> */}
+                                {status === 'approved' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">Approved</span>}
+                                {status === 'rejected' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 border border-red-500/20">Rejected</span>}
+                                {status === 'pending' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/20">Pending</span>}
+                              </div>
                             </div>
                           </div>
+
+                          {/* Approval Actions for Current User */}
+                          {isCurrentUserHead && status === 'pending' && (
+                            <div className="flex items-center gap-2 mt-1 pl-11">
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => handleProjectApproval('active')}
+                              >
+                                <Check className="w-3 h-3 mr-1" /> Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                onClick={() => handleProjectApproval('rejected')}
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" /> Reject
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

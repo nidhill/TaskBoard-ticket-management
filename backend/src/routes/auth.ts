@@ -56,17 +56,30 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         await user.save();
 
         // Send verification OTP email
+        let emailSent = false;
         try {
             await sendVerificationEmail(user.email, otp);
+            emailSent = true;
         } catch (emailError) {
             console.error('Failed to send verification email:', emailError);
+        }
+
+        // In non-production, log OTP for testing (email may not be configured)
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`\n=============================`);
+            console.log(`VERIFICATION OTP for ${user.email}: ${otp}`);
+            console.log(`=============================\n`);
         }
 
         res.status(201).json({
             success: true,
             needsVerification: true,
             email: user.email,
-            message: 'Account created. Please verify your email with the OTP sent.',
+            message: emailSent
+                ? 'Account created. Please verify your email with the OTP sent.'
+                : 'Account created. OTP email could not be sent — check server logs or contact admin.',
+            // Return OTP in response only in non-production for easy testing
+            ...(process.env.NODE_ENV !== 'production' && { devOtp: otp }),
         });
     } catch (error: any) {
         console.error('Register error:', error);

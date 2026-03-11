@@ -36,6 +36,7 @@ export default function Auth() {
   const [showVerify, setShowVerify] = useState(false);
   const [verifyEmail, setVerifyEmail] = useState('');
   const [verifyOtp, setVerifyOtp] = useState('');
+  const [devOtp, setDevOtp] = useState<string | null>(null);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -107,6 +108,7 @@ export default function Auth() {
       // Always enforce OTP verification after signup
       localStorage.removeItem('token');
       setVerifyEmail(result.email || signupEmail);
+      setDevOtp(result.devOtp || null);
       setShowVerify(true);
       setError(null);
     }
@@ -248,6 +250,12 @@ export default function Auth() {
                   <Mail className="w-8 h-8 text-primary" />
                 </div>
               </div>
+              {devOtp && (
+                <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-center">
+                  <p className="text-xs text-yellow-700 font-medium mb-1">Dev Mode — OTP (email not configured)</p>
+                  <p className="text-2xl font-mono font-bold tracking-widest text-yellow-800">{devOtp}</p>
+                </div>
+              )}
               <div>
                 <Input
                   type="text"

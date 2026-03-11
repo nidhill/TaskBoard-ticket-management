@@ -17,7 +17,7 @@ interface AuthContextType {
   role: AppRole | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any; needsVerification?: boolean }>;
-  signUp: (email: string, password: string, name: string, department: string) => Promise<{ error: any; needsVerification?: boolean; email?: string }>;
+  signUp: (email: string, password: string, name: string, department: string) => Promise<{ error: any; needsVerification?: boolean; email?: string; devOtp?: string }>;
   signOut: () => Promise<void>;
   updateUserProfile: (data: Partial<UserResponse>) => Promise<{ error: Error | null }>;
 }
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authService.register({ email, password, name, department });
       // Registration now returns needsVerification — don't auto-login
-      return { error: null, needsVerification: response.needsVerification, email: response.email };
+      return { error: null, needsVerification: response.needsVerification, email: response.email, devOtp: response.devOtp };
     } catch (error: any) {
       return { error: error.response?.data?.message || error.message || 'Registration failed' };
     }

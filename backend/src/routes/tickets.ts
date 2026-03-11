@@ -163,16 +163,16 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
         try {
             const project = await Project.findById((task as any).projectId).populate({
                 path: 'members.user',
-                select: 'name email'
+                select: 'name email notifications'
             });
 
             if (project) {
                 const projectName = project.name;
                 const ticketTitle = description.substring(0, 50) + (description.length > 50 ? '...' : '');
 
-                // Send to all members
+                // Send to members who have email notifications enabled
                 const emailPromises = project.members.map(async (member: any) => {
-                    if (member.user && member.user.email) {
+                    if (member.user && member.user.email && member.user.notifications?.email !== false && member.user.notifications?.ticketUpdates !== false) {
                         return sendTicketCreatedNotification(
                             member.user.email,
                             member.user.name,
@@ -255,7 +255,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
                 if (taskForProject) {
                     const project = await Project.findById(taskForProject.projectId).populate({
                         path: 'members.user',
-                        select: 'name email'
+                        select: 'name email notifications'
                     });
 
                     if (project) {
@@ -263,7 +263,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
                         const ticketTitle = (updatedTicket as any).description?.substring(0, 50) || 'Ticket';
 
                         const emailPromises = project.members.map(async (member: any) => {
-                            if (member.user && member.user.email) {
+                            if (member.user && member.user.email && member.user.notifications?.email !== false && member.user.notifications?.ticketUpdates !== false) {
                                 return sendTicketStatusNotification(
                                     member.user.email,
                                     member.user.name,

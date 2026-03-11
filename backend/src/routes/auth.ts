@@ -262,4 +262,44 @@ router.post('/reset-password', async (req: Request, res: Response): Promise<void
     }
 });
 
+// @route   PUT /api/auth/change-password
+// @desc    Change password for authenticated user
+// @access  Private
+router.put('/change-password', protect, async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            res.status(400).json({ message: 'Please provide current and new password' });
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            res.status(400).json({ message: 'New password must be at least 6 characters' });
+            return;
+        }
+
+        const user = await User.findById(req.user!._id).select('+password');
+
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            res.status(400).json({ message: 'Current password is incorrect' });
+            return;
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ success: true, message: 'Password updated successfully' });
+    } catch (error: any) {
+        console.error('Change password error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 export default router;

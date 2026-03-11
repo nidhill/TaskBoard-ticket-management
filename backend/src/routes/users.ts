@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import User from '../models/User';
 import { protect, AuthRequest } from '../middleware/auth';
 import { roleCheck } from '../middleware/roleCheck';
+import { sendWelcomeEmail } from '../services/email.service';
 
 const router = Router();
 
@@ -170,6 +171,13 @@ router.post(
                 role: role || 'user',
                 avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
             });
+
+            // Send welcome email with credentials
+            try {
+                await sendWelcomeEmail(user.email, user.name, password);
+            } catch (emailErr) {
+                console.error('Failed to send welcome email to new user:', emailErr);
+            }
 
             res.status(201).json({
                 success: true,

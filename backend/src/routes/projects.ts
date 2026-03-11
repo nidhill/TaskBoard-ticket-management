@@ -242,7 +242,7 @@ router.post(
 
                     const memberRole = project.members.find((m: any) => m.user.toString() === member._id.toString())?.role || 'member';
 
-                    if (member.email) {
+                    if (member.email && member.notifications?.email !== false) {
                         return sendProjectMemberNotification(member.email, member.name, project.name, memberRole);
                     }
                 });
@@ -321,7 +321,7 @@ router.put(
 
                 // Notify all members about status change
                 try {
-                    const fullProject = await Project.findById(project._id).populate('members.user', 'name email');
+                    const fullProject = await Project.findById(project._id).populate('members.user', 'name email notifications');
                     if (fullProject && fullProject.members) {
                         const memberIds = fullProject.members.map((m: any) => m.user._id || m.user);
                         await sendNotifications(
@@ -332,7 +332,7 @@ router.put(
                         );
 
                         const emailPromises = fullProject.members.map(async (m: any) => {
-                            if (m.user && m.user.email) {
+                            if (m.user && m.user.email && m.user.notifications?.email !== false) {
                                 return sendProjectStatusNotification(m.user.email, m.user.name, project.name, updates.status);
                             }
                         });
@@ -453,7 +453,7 @@ router.patch(
 
                 // Notify all members
                 try {
-                    const fullProject = await Project.findById(project._id).populate('members.user', 'name email');
+                    const fullProject = await Project.findById(project._id).populate('members.user', 'name email notifications');
                     if (fullProject && fullProject.members) {
                         const memberIds = fullProject.members.map((m: any) => m.user._id || m.user);
                         // Notify creator specifically if needed, but members list usually handles it if they are member
@@ -465,7 +465,7 @@ router.patch(
                         );
 
                         const emailPromises = fullProject.members.map(async (m: any) => {
-                            if (m.user && m.user.email && m.user._id.toString() !== creator?._id.toString()) {
+                            if (m.user && m.user.email && m.user.notifications?.email !== false && m.user._id.toString() !== creator?._id.toString()) {
                                 return sendProjectStatusNotification(m.user.email, m.user.name, project.name, status);
                             }
                         });

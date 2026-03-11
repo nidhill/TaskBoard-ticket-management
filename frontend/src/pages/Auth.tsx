@@ -103,7 +103,9 @@ export default function Auth() {
 
     if (result.error) {
       setError(typeof result.error === 'string' ? result.error : 'Registration failed. Please try again.');
-    } else if (result.needsVerification) {
+    } else {
+      // Always enforce OTP verification after signup
+      localStorage.removeItem('token');
       setVerifyEmail(result.email || signupEmail);
       setShowVerify(true);
       setError(null);

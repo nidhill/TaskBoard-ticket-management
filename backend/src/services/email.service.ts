@@ -1,11 +1,12 @@
-import { Resend } from 'resend';
+import Mailjet from 'node-mailjet';
 
-// Initialize Resend only if key exists to avoid crash
-const getResendClient = () => {
-    if (!process.env.RESEND_API_KEY) {
+const getMailjetClient = () => {
+    const apiKey = process.env.MAILJET_API_KEY;
+    const secretKey = process.env.MAILJET_SECRET_KEY;
+    if (!apiKey || !secretKey) {
         return null;
     }
-    return new Resend(process.env.RESEND_API_KEY);
+    return new Mailjet({ apiKey, apiSecret: secretKey });
 };
 
 interface EmailOptions {
@@ -16,32 +17,31 @@ interface EmailOptions {
 }
 
 export const sendEmail = async ({ to, subject, html, text }: EmailOptions) => {
-    try {
-        const resend = getResendClient();
+    const mailjet = getMailjetClient();
 
-        if (!resend) {
-            console.warn('RESEND_API_KEY is not defined in environment variables');
-            throw new Error('Email service configuration missing');
-        }
-
-        const { data, error } = await resend.emails.send({
-            from: process.env.EMAIL_FROM || 'TaskBoard <onboarding@resend.dev>',
-            to,
-            subject,
-            html,
-            text: text || html.replace(/<[^>]*>?/gm, ''),
-        });
-
-        if (error) {
-            console.error('Resend API Error:', error);
-            throw new Error(error.message);
-        }
-
-        return data;
-    } catch (error) {
-        console.error('Error sending email:', error);
-        throw error;
+    if (!mailjet) {
+        console.warn('MAILJET_API_KEY or MAILJET_SECRET_KEY not set');
+        throw new Error('Email service configuration missing');
     }
+
+    const recipients = (Array.isArray(to) ? to : [to]).map((email) => ({ Email: email }));
+
+    const result = await mailjet.post('send', { version: 'v3.1' }).request({
+        Messages: [
+            {
+                From: {
+                    Email: process.env.EMAIL_FROM || 'noreply@taskboard.app',
+                    Name: 'TaskBoard',
+                },
+                To: recipients,
+                Subject: subject,
+                HTMLPart: html,
+                TextPart: text || html.replace(/<[^>]*>?/gm, ''),
+            },
+        ],
+    });
+
+    return result.body;
 };
 
 export const sendWelcomeEmail = async (email: string, name: string, tempPassword?: string) => {

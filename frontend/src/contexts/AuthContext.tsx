@@ -16,8 +16,8 @@ interface AuthContextType {
   profile: Profile | null;
   role: AppRole | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, name: string, department: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: any; needsVerification?: boolean }>;
+  signUp: (email: string, password: string, name: string, department: string) => Promise<{ error: any; needsVerification?: boolean; email?: string }>;
   signOut: () => Promise<void>;
   updateUserProfile: (data: Partial<UserResponse>) => Promise<{ error: Error | null }>;
 }
@@ -73,23 +73,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(response.user.role as AppRole);
       return { error: null };
     } catch (error: any) {
-      return { error: error.response?.data?.message || error.message || 'Login failed' };
+      const data = error.response?.data;
+      return {
+        error: data?.message || error.message || 'Login failed',
+        needsVerification: data?.needsVerification || false,
+      };
     }
   };
 
   const signUp = async (email: string, password: string, name: string, department: string) => {
     try {
       const response = await authService.register({ email, password, name, department });
-      setUser(response.user);
-      setProfile({
-        id: response.user.id,
-        name: response.user.name,
-        email: response.user.email,
-        department: response.user.department,
-        avatar_url: response.user.avatar_url || null,
-      });
-      setRole(response.user.role as AppRole);
-      return { error: null };
+      // Registration now returns needsVerification — don't auto-login
+      return { error: null, needsVerification: response.needsVerification, email: response.email };
     } catch (error: any) {
       return { error: error.response?.data?.message || error.message || 'Registration failed' };
     }

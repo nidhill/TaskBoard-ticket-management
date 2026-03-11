@@ -30,10 +30,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, Shield, Loader2 } from 'lucide-react';
+import { Search, Shield, Loader2, Trash2 } from 'lucide-react';
 import api from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { AppRole } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface UserWithRole {
   id: string;
@@ -63,7 +74,10 @@ export default function UserManagement() {
   const [newRole, setNewRole] = useState<AppRole>('user');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [deleteUser, setDeleteUser] = useState<UserWithRole | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   const fetchUsers = async () => {
     try {
@@ -127,6 +141,21 @@ export default function UserManagement() {
       });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteUser) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/users/${deleteUser.id}`);
+      toast({ title: 'User Deleted', description: `${deleteUser.name} has been removed.` });
+      setDeleteUser(null);
+      fetchUsers();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.response?.data?.message || 'Failed to delete user', variant: 'destructive' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -202,17 +231,28 @@ export default function UserManagement() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setNewRole(user.role);
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          Change Role
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setNewRole(user.role);
+                              setIsDialogOpen(true);
+                            }}
+                          >
+                            Change Role
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                            disabled={user.id === currentUser?.id}
+                            onClick={() => setDeleteUser(user)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -283,6 +323,27 @@ export default function UserManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deleteUser} onOpenChange={(open) => !open && setDeleteUser(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete User</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <strong>{deleteUser?.name}</strong> ({deleteUser?.email})? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteUser}
+                disabled={isDeleting}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                {isDeleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Deleting...</> : 'Delete User'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MainLayout>
   );

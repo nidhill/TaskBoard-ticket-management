@@ -12,6 +12,9 @@ export interface IUser extends Document {
     avatar_url?: string;
     resetPasswordOtp?: string;
     resetPasswordExpire?: Date;
+    isVerified: boolean;
+    emailVerifyOtp?: string;
+    emailVerifyExpire?: Date;
     createdAt: Date;
     updatedAt: Date;
     notifications: {
@@ -62,6 +65,18 @@ const userSchema = new Schema<IUser>(
             select: false,
         },
         resetPasswordExpire: {
+            type: Date,
+            select: false,
+        },
+        isVerified: {
+            type: Boolean,
+            default: true, // Existing users default to verified; new registrations explicitly set to false
+        },
+        emailVerifyOtp: {
+            type: String,
+            select: false,
+        },
+        emailVerifyExpire: {
             type: Date,
             select: false,
         },

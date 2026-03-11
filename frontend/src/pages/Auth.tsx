@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FolderKanban, Loader2, AlertCircle, CheckCircle2, Users, Zap } from 'lucide-react';
+import { FolderKanban, Loader2, AlertCircle, CheckCircle2, Users, Zap, Mail } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { z } from 'zod';
 
@@ -31,6 +32,11 @@ export default function Auth() {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupDepartment, setSignupDepartment] = useState('');
 
+  // Email verification step
+  const [showVerify, setShowVerify] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState('');
+  const [verifyOtp, setVerifyOtp] = useState('');
+
   // Redirect if already logged in
   useEffect(() => {
     if (user && !loading) {
@@ -55,11 +61,18 @@ export default function Auth() {
     }
 
     setIsSubmitting(true);
-    const { error } = await signIn(loginEmail, loginPassword);
+    const result = await signIn(loginEmail, loginPassword);
     setIsSubmitting(false);
 
-    if (error) {
-      setError(typeof error === 'string' ? error : 'Invalid email or password. Please try again.');
+    if (result.error) {
+      // If unverified, redirect to OTP step
+      if ((result as any).needsVerification) {
+        setVerifyEmail(loginEmail);
+        setShowVerify(true);
+        setError(null);
+      } else {
+        setError(typeof result.error === 'string' ? result.error : 'Invalid email or password. Please try again.');
+      }
     }
   };
 
@@ -85,11 +98,43 @@ export default function Auth() {
     }
 
     setIsSubmitting(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupName, signupDepartment);
+    const result = await signUp(signupEmail, signupPassword, signupName, signupDepartment);
     setIsSubmitting(false);
 
-    if (error) {
-      setError(typeof error === 'string' ? error : 'Registration failed. Please try again.');
+    if (result.error) {
+      setError(typeof result.error === 'string' ? result.error : 'Registration failed. Please try again.');
+    } else if (result.needsVerification) {
+      setVerifyEmail(result.email || signupEmail);
+      setShowVerify(true);
+      setError(null);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (verifyOtp.length !== 6) {
+      setError('OTP must be 6 digits');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await authService.verifyEmail(verifyEmail, verifyOtp);
+      // Token is stored in localStorage — reload to trigger AuthContext
+      window.location.href = '/';
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError(null);
+    try {
+      await authService.resendVerification(verifyEmail);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to resend OTP');
     }
   };
 
@@ -174,10 +219,12 @@ export default function Auth() {
           {/* Header */}
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-bold tracking-tight">
-              {isLogin ? 'Welcome back' : 'Create your account'}
+              {showVerify ? 'Verify your email' : isLogin ? 'Welcome back' : 'Create your account'}
             </h2>
             <p className="text-muted-foreground">
-              {isLogin
+              {showVerify
+                ? `We sent a 6-digit code to ${verifyEmail}`
+                : isLogin
                 ? 'Manage your projects efficiently with our powerful management system.'
                 : 'Start managing your projects efficiently today'}
             </p>
@@ -191,8 +238,36 @@ export default function Auth() {
             </Alert>
           )}
 
-          {/* Forms */}
-          {isLogin ? (
+          {/* OTP Verification Step */}
+          {showVerify ? (
+            <form onSubmit={handleVerifyOtp} className="space-y-5">
+              <div className="flex justify-center mb-2">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Mail className="w-8 h-8 text-primary" />
+                </div>
+              </div>
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Enter 6-digit OTP"
+                  value={verifyOtp}
+                  onChange={(e) => setVerifyOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="h-11 font-mono tracking-widest text-center text-lg"
+                  maxLength={6}
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+              <Button type="submit" className="w-full h-11 text-base font-medium" disabled={isSubmitting}>
+                {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Verifying...</> : 'Verify Email'}
+              </Button>
+              <div className="text-center">
+                <button type="button" onClick={handleResendOtp} className="text-sm text-primary hover:underline">
+                  Didn't receive the code? Resend
+                </button>
+              </div>
+            </form>
+          ) : isLogin ? (
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
                 <Input
@@ -309,28 +384,30 @@ export default function Auth() {
           )}
 
           {/* Toggle Form */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-              }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isLogin ? (
-                <>
-                  Don't have an account?{' '}
-                  <span className="text-primary font-medium hover:underline">Sign up</span>
-                </>
-              ) : (
-                <>
-                  Already have an account?{' '}
-                  <span className="text-primary font-medium hover:underline">Log in</span>
-                </>
-              )}
-            </button>
-          </div>
+          {!showVerify && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError(null);
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {isLogin ? (
+                  <>
+                    Don't have an account?{' '}
+                    <span className="text-primary font-medium hover:underline">Sign up</span>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{' '}
+                    <span className="text-primary font-medium hover:underline">Log in</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -162,6 +162,23 @@ export const sendProjectApprovedEmail = async (email: string, projectName: strin
     return sendEmail({ to: email, subject, html });
 };
 
+export const sendVerificationEmail = async (email: string, otp: string) => {
+    const subject = 'Verify your TaskBoard account';
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #2662d9;">Verify Your Email</h1>
+            <p>Thanks for signing up for TaskBoard! Please use the OTP below to verify your email address:</p>
+            <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
+                <h2 style="margin: 0; color: #333; letter-spacing: 8px; font-size: 32px;">${otp}</h2>
+            </div>
+            <p>This OTP expires in <strong>10 minutes</strong>.</p>
+            <p>If you didn't create a TaskBoard account, you can safely ignore this email.</p>
+            <p>Best regards,<br>The TaskBoard Team</p>
+        </div>
+    `;
+    return sendEmail({ to: email, subject, html });
+};
+
 export const sendProjectApprovalRequest = async (email: string, projectName: string, requestorName: string, projectId: string) => {
     const subject = `Project Approval Request: ${projectName}`;
     const approvalLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/projects/${projectId}`;

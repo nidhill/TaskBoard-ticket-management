@@ -84,8 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, name: string, department: string) => {
     try {
       const response = await authService.register({ email, password, name, department });
-      // Registration now returns needsVerification — don't auto-login
-      return { error: null, needsVerification: response.needsVerification, email: response.email, devOtp: response.devOtp };
+      setUser(response.user);
+      setProfile({
+        id: response.user.id,
+        name: response.user.name,
+        email: response.user.email,
+        department: response.user.department,
+        avatar_url: response.user.avatar_url || null,
+      });
+      setRole(response.user.role as AppRole);
+      return { error: null };
     } catch (error: any) {
       return { error: error.response?.data?.message || error.message || 'Registration failed' };
     }

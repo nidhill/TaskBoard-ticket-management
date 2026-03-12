@@ -37,7 +37,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // Create user as unverified
+        // Create user
         const user = await User.create({
             name,
             email,
@@ -45,41 +45,38 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             department,
             role: role || 'user',
             avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
-            isVerified: false,
+            isVerified: true,
         });
 
-        // Generate verification OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const salt = await bcrypt.genSalt(10);
-        user.emailVerifyOtp = await bcrypt.hash(otp, salt);
-        user.emailVerifyExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        await user.save();
+        // Generate token for immediate login
+        const token = generateToken(user._id.toString());
 
-        // Send verification OTP email
-        let emailSent = false;
+        // Send welcome email
         try {
-            await sendVerificationEmail(user.email, otp);
-            emailSent = true;
+            await sendWelcomeEmail(user.email, user.name);
         } catch (emailError) {
-            console.error('Failed to send verification email:', emailError);
+            console.error('Failed to send welcome email:', emailError);
         }
 
-        // In non-production, log OTP for testing (email may not be configured)
-        if (process.env.NODE_ENV !== 'production') {
-            console.log(`\n=============================`);
-            console.log(`VERIFICATION OTP for ${user.email}: ${otp}`);
-            console.log(`=============================\n`);
-        }
+        await logAudit({
+            userId: user._id.toString(),
+            action: 'REGISTER',
+            details: `User ${user.name} registered`,
+            resourceId: user._id.toString(),
+            resourceType: 'User'
+        });
 
         res.status(201).json({
             success: true,
-            needsVerification: true,
-            email: user.email,
-            message: emailSent
-                ? 'Account created. Please verify your email with the OTP sent.'
-                : 'Account created. OTP email could not be sent — check server logs or contact admin.',
-            // Return OTP in response only in non-production for easy testing
-            ...(process.env.NODE_ENV !== 'production' && { devOtp: otp }),
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                department: user.department,
+                avatar_url: user.avatar_url,
+            },
         });
     } catch (error: any) {
         console.error('Register error:', error);
@@ -113,12 +110,6 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 
         if (!isPasswordMatch) {
             res.status(401).json({ message: 'Invalid credentials' });
-            return;
-        }
-
-        // Block unverified users
-        if (!user.isVerified) {
-            res.status(403).json({ message: 'Please verify your email before logging in.', needsVerification: true, email: user.email });
             return;
         }
 

@@ -66,14 +66,7 @@ export default function Auth() {
     setIsSubmitting(false);
 
     if (result.error) {
-      // If unverified, redirect to OTP step
-      if ((result as any).needsVerification) {
-        setVerifyEmail(loginEmail);
-        setShowVerify(true);
-        setError(null);
-      } else {
-        setError(typeof result.error === 'string' ? result.error : 'Invalid email or password. Please try again.');
-      }
+      setError(typeof result.error === 'string' ? result.error : 'Invalid email or password. Please try again.');
     }
   };
 
@@ -104,13 +97,6 @@ export default function Auth() {
 
     if (result.error) {
       setError(typeof result.error === 'string' ? result.error : 'Registration failed. Please try again.');
-    } else {
-      // Always enforce OTP verification after signup
-      localStorage.removeItem('token');
-      setVerifyEmail(result.email || signupEmail);
-      setDevOtp(result.devOtp || null);
-      setShowVerify(true);
-      setError(null);
     }
   };
 

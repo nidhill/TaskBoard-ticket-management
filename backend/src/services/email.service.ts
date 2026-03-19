@@ -1,12 +1,16 @@
-import Mailjet from 'node-mailjet';
+import nodemailer from 'nodemailer';
 
-const getMailjetClient = () => {
-    const apiKey = process.env.MAILJET_API_KEY;
-    const secretKey = process.env.MAILJET_SECRET_KEY;
-    if (!apiKey || !secretKey) {
+const getTransporter = () => {
+    const user = process.env.GMAIL_USER;
+    const pass = process.env.GMAIL_APP_PASSWORD;
+    if (!user || !pass) {
+        console.warn('GMAIL_USER or GMAIL_APP_PASSWORD not set');
         return null;
     }
-    return new Mailjet({ apiKey, apiSecret: secretKey });
+    return nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user, pass },
+    });
 };
 
 interface EmailOptions {
@@ -17,31 +21,21 @@ interface EmailOptions {
 }
 
 export const sendEmail = async ({ to, subject, html, text }: EmailOptions) => {
-    const mailjet = getMailjetClient();
+    const transporter = getTransporter();
 
-    if (!mailjet) {
-        console.warn('MAILJET_API_KEY or MAILJET_SECRET_KEY not set');
-        throw new Error('Email service configuration missing');
+    if (!transporter) {
+        throw new Error('Email service not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD.');
     }
 
-    const recipients = (Array.isArray(to) ? to : [to]).map((email) => ({ Email: email }));
+    const fromEmail = process.env.GMAIL_USER;
 
-    const result = await mailjet.post('send', { version: 'v3.1' }).request({
-        Messages: [
-            {
-                From: {
-                    Email: process.env.EMAIL_FROM || 'noreply@taskboard.app',
-                    Name: 'TaskBoard',
-                },
-                To: recipients,
-                Subject: subject,
-                HTMLPart: html,
-                TextPart: text || html.replace(/<[^>]*>?/gm, ''),
-            },
-        ],
+    await transporter.sendMail({
+        from: `"TaskBoard" <${fromEmail}>`,
+        to: Array.isArray(to) ? to.join(',') : to,
+        subject,
+        html,
+        text: text || html.replace(/<[^>]*>?/gm, ''),
     });
-
-    return result.body;
 };
 
 export const sendWelcomeEmail = async (email: string, name: string, tempPassword?: string) => {

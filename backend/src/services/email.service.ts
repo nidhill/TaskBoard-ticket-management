@@ -1,16 +1,13 @@
-import nodemailer from 'nodemailer';
+import Mailjet from 'node-mailjet';
 
-const getTransporter = () => {
-    const user = process.env.GMAIL_USER;
-    const pass = process.env.GMAIL_APP_PASSWORD;
-    if (!user || !pass) {
-        console.warn('GMAIL_USER or GMAIL_APP_PASSWORD not set');
+const getMailjetClient = () => {
+    const apiKey = process.env.MAILJET_API_KEY;
+    const secretKey = process.env.MAILJET_SECRET_KEY;
+    if (!apiKey || !secretKey) {
+        console.warn('MAILJET_API_KEY or MAILJET_SECRET_KEY not set');
         return null;
     }
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user, pass },
-    });
+    return Mailjet.apiConnect(apiKey, secretKey);
 };
 
 interface EmailOptions {
@@ -21,20 +18,25 @@ interface EmailOptions {
 }
 
 export const sendEmail = async ({ to, subject, html, text }: EmailOptions) => {
-    const transporter = getTransporter();
+    const client = getMailjetClient();
 
-    if (!transporter) {
-        throw new Error('Email service not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD.');
+    if (!client) {
+        throw new Error('Email service not configured. Set MAILJET_API_KEY and MAILJET_SECRET_KEY.');
     }
 
-    const fromEmail = process.env.GMAIL_USER;
+    const fromEmail = process.env.EMAIL_FROM || 'noreply@slatee.tech';
+    const recipients = Array.isArray(to) ? to : [to];
 
-    await transporter.sendMail({
-        from: `"TaskBoard" <${fromEmail}>`,
-        to: Array.isArray(to) ? to.join(',') : to,
-        subject,
-        html,
-        text: text || html.replace(/<[^>]*>?/gm, ''),
+    await client.post('send', { version: 'v3.1' }).request({
+        Messages: [
+            {
+                From: { Email: fromEmail, Name: 'TaskBoard' },
+                To: recipients.map((email) => ({ Email: email })),
+                Subject: subject,
+                HTMLPart: html,
+                TextPart: text || html.replace(/<[^>]*>?/gm, ''),
+            },
+        ],
     });
 };
 

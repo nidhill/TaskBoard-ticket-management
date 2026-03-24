@@ -1,4 +1,3 @@
-import { Task } from "@/types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { MoreHorizontal } from "lucide-react";
 

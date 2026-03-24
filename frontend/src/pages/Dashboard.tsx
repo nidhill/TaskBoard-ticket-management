@@ -11,13 +11,11 @@ import {
   Clock, AlertTriangle, Loader2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import api from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Dashboard() {
-  const { profile } = useAuth();
   const permissions = usePermissions();
   const { toast } = useToast();
 

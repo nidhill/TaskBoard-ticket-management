@@ -1,4 +1,3 @@
-import { Task, TaskStatus } from "@/types";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
 import { MoreHorizontal } from "lucide-react";
 

@@ -40,6 +40,21 @@ const styles = `
   @keyframes sl-progress {
     from { width:0; }
   }
+  @keyframes sl-bar-rise {
+    from { height: 0; }
+  }
+  @keyframes sl-shimmer {
+    0%   { background-position: -300% center; }
+    100% { background-position: 300% center; }
+  }
+  @keyframes sl-glow-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(245,166,35,.55); }
+    50%      { box-shadow: 0 0 0 6px rgba(245,166,35,0); }
+  }
+  @keyframes sl-status-blink {
+    0%,100% { opacity: 1; }
+    50%      { opacity: .2; }
+  }
 
   .sl-float-a { animation: sl-float-a 7s ease-in-out infinite; }
   .sl-float-b { animation: sl-float-b 9s ease-in-out infinite 1.2s; }
@@ -61,17 +76,28 @@ const styles = `
 
   .sl-card {
     background: rgba(255,255,255,.06);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,.1);
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 18px 20px;
     color: white;
+    overflow: hidden;
   }
   .sl-card-amber {
-    background: rgba(245,166,35,.1);
-    border-color: rgba(245,166,35,.25);
+    background: rgba(245,166,35,.08);
+    border-color: rgba(245,166,35,.32);
   }
+  .sl-card-glow-amber {
+    box-shadow: 0 0 0 1px rgba(245,166,35,.28), 0 28px 70px rgba(245,166,35,.16), 0 10px 24px rgba(0,0,0,.55);
+  }
+  .sl-card-glow-purple {
+    box-shadow: 0 0 0 1px rgba(139,92,246,.22), 0 18px 44px rgba(139,92,246,.12), 0 7px 18px rgba(0,0,0,.45);
+  }
+  .sl-card-glow-teal {
+    box-shadow: 0 0 0 1px rgba(20,184,166,.2), 0 18px 44px rgba(20,184,166,.09), 0 7px 18px rgba(0,0,0,.42);
+  }
+  .sl-live-badge { animation: sl-glow-pulse 2.2s ease-in-out infinite; }
 
   .sl-progress-track {
     height: 3px;
@@ -375,57 +401,142 @@ export default function Auth() {
 
           {/* Floating cards */}
           <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ position: 'relative', width: 300, height: 340 }}>
+            <div style={{ position: 'relative', width: 320, height: 390 }}>
 
-              {/* Card C — back left */}
-              <div className="sl-card sl-float-c" style={{
-                position: 'absolute', top: 0, left: -20,
-                minWidth: 185, opacity: .45,
+              {/* Card C — back left · Design */}
+              <div className="sl-card sl-float-c sl-card-glow-teal" style={{
+                position: 'absolute', top: 14, left: -18,
+                width: 205, opacity: .58,
+                background: 'rgba(20,184,166,.07)', borderColor: 'rgba(20,184,166,.22)'
               }}>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.45)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Design</div>
-                <div style={{ fontSize: 13.5, fontWeight: 500, marginBottom: 14 }}>UI Component Library</div>
-                <div className="sl-progress-track">
-                  <div className="sl-progress-fill" style={{ width: '45%' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#14b8a6', flexShrink: 0 }} />
+                    <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,.4)', letterSpacing: .9, textTransform: 'uppercase' }}>Design</span>
+                  </div>
+                  <span style={{ fontSize: 9, color: 'rgba(20,184,166,.55)', fontFamily: 'monospace', letterSpacing: .5 }}>#DES-12</span>
                 </div>
-                <div style={{ marginTop: 8, fontSize: 11, color: 'rgba(255,255,255,.3)' }}>45% · 8 tasks</div>
-              </div>
-
-              {/* Card B — back right */}
-              <div className="sl-card sl-float-b" style={{
-                position: 'absolute', bottom: 20, right: -30,
-                minWidth: 185, opacity: .5,
-                background: 'rgba(99,102,241,.12)', borderColor: 'rgba(99,102,241,.2)'
-              }}>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.45)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Backend</div>
-                <div style={{ fontSize: 13.5, fontWeight: 500, marginBottom: 12 }}>Auth Integration</div>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <span className="sl-badge" style={{ background: 'rgba(74,222,128,.15)', color: '#4ade80' }}>In Review</span>
-                </div>
-              </div>
-
-              {/* Card A — front/main */}
-              <div className="sl-card sl-card-amber sl-float-a" style={{
-                position: 'absolute', top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%) rotate(-2.5deg)',
-                minWidth: 230, zIndex: 2,
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,.5)', letterSpacing: 1, textTransform: 'uppercase' }}>Active Sprint</div>
-                  <span className="sl-badge" style={{ background: '#f5a623', color: '#0f1117' }}>Live</span>
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Dashboard Redesign</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginBottom: 16 }}>Due in 3 days</div>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 11, lineHeight: 1.3 }}>UI Component Library</div>
                 <div className="sl-progress-track" style={{ marginBottom: 10 }}>
-                  <div className="sl-progress-fill" style={{ width: '72%' }} />
+                  <div style={{ height: '100%', width: '45%', background: 'linear-gradient(90deg,#14b8a6,#06b6d4)', borderRadius: 2, animation: 'sl-progress .9s .5s ease both' }} />
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  {[['✓','Buttons'], ['✓','Form inputs'], ['○','Data tables'], ['○','Charts']].map(([c, label], i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3.5 }}>
+                      <span style={{ fontSize: 9, color: c === '✓' ? '#14b8a6' : 'rgba(255,255,255,.2)', lineHeight: 1 }}>{c}</span>
+                      <span style={{ fontSize: 10.5, color: c === '✓' ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.18)', textDecoration: c === '✓' ? 'line-through' : 'none' }}>{label}</span>
+                    </div>
+                  ))}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,.4)' }}>72% complete</span>
-                  <div className="sl-avatar-row" style={{ marginLeft: 6 }}>
-                    {['NM','AR','SK'].map((init, i) => (
-                      <div key={i} className="sl-avatar" style={{
-                        background: ['#f5a623','#4ade80','#60a5fa'][i],
-                        marginLeft: i === 0 ? 0 : -6, color: '#0f1117'
-                      }}>{init}</div>
+                  <div className="sl-avatar-row">
+                    {[['ML','#14b8a6'],['AR','#0891b2']].map(([init, bg], i) => (
+                      <div key={i} className="sl-avatar" style={{ background: bg as string, marginLeft: i === 0 ? 0 : -6, color: '#fff' }}>{init}</div>
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,.3)' }}>8 tasks</span>
+                </div>
+              </div>
+
+              {/* Card B — back right · Backend */}
+              <div className="sl-card sl-float-b sl-card-glow-purple" style={{
+                position: 'absolute', bottom: 22, right: -28,
+                width: 198, opacity: .6,
+                background: 'rgba(139,92,246,.07)', borderColor: 'rgba(139,92,246,.22)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#8b5cf6', flexShrink: 0 }} />
+                    <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,.4)', letterSpacing: .9, textTransform: 'uppercase' }}>Backend</span>
+                  </div>
+                  <span style={{ fontSize: 9, color: 'rgba(139,92,246,.55)', fontFamily: 'monospace' }}>#BKD-42</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 11, lineHeight: 1.3 }}>Auth Integration</div>
+                <div style={{ marginBottom: 11, padding: '8px 10px', background: 'rgba(139,92,246,.1)', borderRadius: 9 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80', animation: 'sl-status-blink 2s ease infinite' }} />
+                    <span className="sl-badge" style={{ background: 'rgba(74,222,128,.15)', color: '#4ade80', fontSize: 9 }}>In Review</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, fontSize: 10, alignItems: 'center' }}>
+                    <span style={{ color: '#4ade80' }}>+247</span>
+                    <span style={{ color: '#f87171' }}>-38</span>
+                    <span style={{ color: 'rgba(255,255,255,.22)', fontSize: 9 }}>PR #42</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="sl-avatar-row">
+                    {[['SK','#8b5cf6'],['MN','#6366f1']].map(([init, bg], i) => (
+                      <div key={i} className="sl-avatar" style={{ background: bg as string, marginLeft: i === 0 ? 0 : -6, color: '#fff' }}>{init}</div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.28)" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,.28)' }}>2</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card A — front/main · Active Sprint */}
+              <div className="sl-card sl-card-amber sl-float-a sl-card-glow-amber" style={{
+                position: 'absolute', top: 78, left: 62,
+                width: 248, zIndex: 2,
+              }}>
+                {/* Shimmer sweep */}
+                <div style={{
+                  position: 'absolute', inset: 0, borderRadius: 16, pointerEvents: 'none',
+                  background: 'linear-gradient(105deg, transparent 35%, rgba(245,166,35,.07) 50%, transparent 65%)',
+                  backgroundSize: '300% 100%',
+                  animation: 'sl-shimmer 3.5s ease-in-out infinite',
+                }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <span className="sl-badge sl-live-badge" style={{ background: '#f5a623', color: '#0f1117', fontSize: 9, display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px' }}>
+                      <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#0f1117' }} />
+                      Live
+                    </span>
+                    <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,.35)', letterSpacing: .8, textTransform: 'uppercase' }}>Sprint</span>
+                  </div>
+                  <span style={{ fontSize: 9, color: 'rgba(245,166,35,.5)', fontFamily: 'monospace' }}>#DASH-07</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 5 }}>
+                  <div style={{ fontSize: 15.5, fontWeight: 700, lineHeight: 1.25, flex: 1 }}>Dashboard Redesign</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 10, flexShrink: 0 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f87171' }} />
+                    <span style={{ fontSize: 9, color: '#f87171', textTransform: 'uppercase', letterSpacing: .4 }}>High</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 14 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(245,166,35,.7)" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span style={{ fontSize: 11, color: 'rgba(245,166,35,.65)' }}>Due in 3 days</span>
+                </div>
+                <div className="sl-progress-track" style={{ marginBottom: 5 }}>
+                  <div style={{ height: '100%', width: '72%', background: 'linear-gradient(90deg,#f5a623,#fbbf24)', borderRadius: 2, animation: 'sl-progress .9s .4s ease both' }} />
+                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,.3)', marginBottom: 14 }}>72% complete</div>
+                {/* Activity sparkline */}
+                <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 26, marginBottom: 14 }}>
+                  {[40, 65, 32, 80, 50, 88, 60, 95, 72, 100].map((h, i) => (
+                    <div key={i} style={{
+                      flex: 1, borderRadius: '2px 2px 0 0',
+                      background: i >= 7 ? 'rgba(245,166,35,.9)' : 'rgba(245,166,35,.22)',
+                      height: `${h}%`,
+                      animation: `sl-bar-rise .5s ${i * .055}s ease both`
+                    }} />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="sl-avatar-row">
+                    {[['NM','#f5a623'],['AR','#4ade80'],['SK','#60a5fa']].map(([init, bg], i) => (
+                      <div key={i} className="sl-avatar" style={{ background: bg as string, marginLeft: i === 0 ? 0 : -6, color: '#0f1117', fontWeight: 800 }}>{init}</div>
+                    ))}
+                    <div className="sl-avatar" style={{ background: 'rgba(255,255,255,.1)', marginLeft: -6, color: 'rgba(255,255,255,.4)', fontSize: 8 }}>+2</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 7 }}>
+                    {[['#4ade80', '5'], ['#fbbf24', '2'], ['#f87171', '1']].map(([color, count], i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <div style={{ width: 5, height: 5, borderRadius: '50%', background: color as string }} />
+                        <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,.32)' }}>{count}</span>
+                      </div>
                     ))}
                   </div>
                 </div>

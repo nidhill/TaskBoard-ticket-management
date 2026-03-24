@@ -83,8 +83,8 @@ const styles = `
 
   /* OTP boxes */
   .sl-otp-box {
-    flex: 1; height: 60px; text-align: center;
-    font-size: 24px; font-weight: 700; font-family: 'Outfit', monospace;
+    width: 48px; height: 52px; flex-shrink: 0; text-align: center;
+    font-size: 20px; font-weight: 700; font-family: 'Outfit', monospace;
     background: #e1dfdb; border: 2px solid transparent;
     border-radius: 8px; outline: none; color: #111;
     transition: border-color .15s, background .15s; caret-color: transparent;
@@ -231,7 +231,7 @@ function OtpBoxes({ value, onChange, disabled }: { value: string; onChange: (v: 
   };
 
   return (
-    <div style={{ display: 'flex', gap: 10 }}>
+    <div style={{ display: 'flex', gap: 8 }}>
       {Array.from({ length: 6 }).map((_, idx) => (
         <input
           key={idx}

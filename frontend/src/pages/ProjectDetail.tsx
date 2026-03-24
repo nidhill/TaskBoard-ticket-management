@@ -463,21 +463,7 @@ export default function ProjectDetail() {
                     Delete Project
                   </Button>
                 </AlertDialogTrigger>
-                {isCreator ? (
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Action Restricted</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        As the project creator, you do not have permission to delete this project.
-                        Please contact an administrator if deletion is required.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Close</AlertDialogCancel>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                ) : (
-                  <AlertDialogContent>
+                <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                       <AlertDialogDescription>
@@ -496,7 +482,6 @@ export default function ProjectDetail() {
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
-                )}
               </AlertDialog>
             )}
 

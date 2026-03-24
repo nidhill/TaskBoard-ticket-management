@@ -5,6 +5,7 @@ import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FolderKanban, Loader2, AlertCircle, CheckCircle2, Users, Zap, Mail } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { z } from 'zod';
@@ -341,15 +342,17 @@ export default function Auth() {
               </div>
 
               <div>
-                <Input
-                  id="signup-department"
-                  type="text"
-                  placeholder="Enter your department"
-                  value={signupDepartment}
-                  onChange={(e) => setSignupDepartment(e.target.value)}
-                  className="h-11"
-                  required
-                />
+                <Select onValueChange={setSignupDepartment} value={signupDepartment}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select your department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Marketing Team">Marketing Team</SelectItem>
+                    <SelectItem value="Developer">Developer</SelectItem>
+                    <SelectItem value="Department Head">Department Head</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>

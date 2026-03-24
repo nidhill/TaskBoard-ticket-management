@@ -1,11 +1,12 @@
 import { Router, Response } from 'express';
 import Comment from '../models/Comment';
 import Ticket from '../models/Ticket';
+import User from '../models/User';
 import { protect, AuthRequest } from '../middleware/auth';
+import { sendNotification } from '../services/notification.service';
+import { io } from '../server';
 
 const router = Router();
-
-// All routes are protected
 router.use(protect);
 
 // @route   GET /api/comments
@@ -14,16 +15,13 @@ router.use(protect);
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const { ticketId } = req.query;
-
         if (!ticketId) {
             res.status(400).json({ message: 'Ticket ID is required' });
             return;
         }
-
         const comments = await Comment.find({ ticketId })
             .populate('userId', 'name email avatar_url role')
-            .sort({ createdAt: 1 }); // Oldest first (chat style) or Newest first? User prefers threaded usually implies oldest first for flow.
-
+            .sort({ createdAt: 1 });
         res.json({ success: true, comments });
     } catch (error: any) {
         console.error('Get comments error:', error);
@@ -32,18 +30,16 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 // @route   POST /api/comments
-// @desc    Create a new comment
+// @desc    Create a new comment (with @mention support)
 // @access  Private
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const { ticketId, text, attachments } = req.body;
-
         if (!ticketId || !text) {
             res.status(400).json({ message: 'Ticket ID and text are required' });
             return;
         }
 
-        // Check if ticket exists
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) {
             res.status(404).json({ message: 'Ticket not found' });
@@ -54,11 +50,37 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
             ticketId,
             userId: req.user!._id,
             text,
-            attachments: attachments || []
+            attachments: attachments || [],
         });
 
         const populatedComment = await Comment.findById(comment._id)
             .populate('userId', 'name email avatar_url role');
+
+        // Emit real-time event to ticket room
+        io.to(`ticket:${ticketId}`).emit('new_comment', populatedComment);
+
+        // Handle @mentions — find @username patterns
+        const mentionRegex = /@(\w+)/g;
+        const mentions = [...text.matchAll(mentionRegex)].map((m) => m[1]);
+        if (mentions.length > 0) {
+            const mentionedUsers = await User.find({
+                name: { $in: mentions.map((m: string) => new RegExp(`^${m}$`, 'i')) },
+            });
+            for (const mentioned of mentionedUsers) {
+                if (mentioned._id.toString() !== req.user!._id.toString()) {
+                    await sendNotification(
+                        mentioned._id,
+                        'You were mentioned in a comment',
+                        `${req.user!.name} mentioned you: "${text.substring(0, 60)}..."`,
+                        'info'
+                    );
+                    io.to(`user:${mentioned._id}`).emit('notification', {
+                        title: 'You were mentioned',
+                        message: `${req.user!.name} mentioned you in a comment`,
+                    });
+                }
+            }
+        }
 
         res.status(201).json({ success: true, comment: populatedComment });
     } catch (error: any) {

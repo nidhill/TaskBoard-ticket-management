@@ -175,6 +175,24 @@ export const sendVerificationEmail = async (email: string, otp: string) => {
     return sendEmail({ to: email, subject, html });
 };
 
+export const sendDueDateReminder = async (email: string, name: string, taskName: string, dueDate: Date) => {
+    const subject = `Due Tomorrow: ${taskName}`;
+    const formatted = dueDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #e11d48;">Task Due Tomorrow</h2>
+            <p>Hi ${name},</p>
+            <p>This is a reminder that the following task is due <strong>tomorrow (${formatted})</strong>:</p>
+            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 18px; font-weight: bold;">${taskName}</p>
+            </div>
+            <p>Please make sure to complete or update its status on TaskBoard.</p>
+            <p>Best regards,<br>The TaskBoard Team</p>
+        </div>
+    `;
+    return sendEmail({ to: email, subject, html });
+};
+
 export const sendProjectApprovalRequest = async (email: string, projectName: string, requestorName: string, projectId: string) => {
     const subject = `Project Approval Request: ${projectName}`;
     const approvalLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/projects/${projectId}`;

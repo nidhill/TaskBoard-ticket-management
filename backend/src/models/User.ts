@@ -15,6 +15,7 @@ export interface IUser extends Document {
     isVerified: boolean;
     emailVerifyOtp?: string;
     emailVerifyExpire?: Date;
+    refreshToken?: string;
     createdAt: Date;
     updatedAt: Date;
     notifications: {
@@ -78,6 +79,10 @@ const userSchema = new Schema<IUser>(
         },
         emailVerifyExpire: {
             type: Date,
+            select: false,
+        },
+        refreshToken: {
+            type: String,
             select: false,
         },
         notifications: {

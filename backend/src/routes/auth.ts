@@ -10,11 +10,14 @@ import { logAudit } from '../services/audit.service';
 
 const router = Router();
 
-// Generate JWT Token
+// Generate Access Token (short-lived)
 const generateToken = (id: string): string => {
-    return jwt.sign({ id }, process.env.JWT_SECRET!, {
-        expiresIn: (process.env.JWT_EXPIRE || '7d') as any, // Cast to any to avoid string | undefined mismatches with SignOptions
-    });
+    return jwt.sign({ id }, process.env.JWT_SECRET!, { expiresIn: '15m' as any });
+};
+
+// Generate Refresh Token (long-lived)
+const generateRefreshToken = (id: string): string => {
+    return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET! + '_refresh', { expiresIn: '30d' as any });
 };
 
 // @route   POST /api/auth/register
@@ -105,6 +108,11 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 
         // Generate token
         const token = generateToken(user._id.toString());
+        const refreshToken = generateRefreshToken(user._id.toString());
+
+        // Save refresh token to DB
+        user.refreshToken = refreshToken;
+        await user.save();
 
         // Log login
         await logAudit({
@@ -118,6 +126,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         res.json({
             success: true,
             token,
+            refreshToken,
             user: {
                 id: user._id,
                 name: user.name,
@@ -130,6 +139,48 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     } catch (error: any) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Server error during login' });
+    }
+});
+
+// @route   POST /api/auth/refresh
+// @desc    Refresh access token using refresh token
+// @access  Public
+router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { refreshToken } = req.body;
+        if (!refreshToken) {
+            res.status(401).json({ message: 'Refresh token required' });
+            return;
+        }
+
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET! + '_refresh') as { id: string };
+        const user = await User.findById(decoded.id).select('+refreshToken');
+
+        if (!user || user.refreshToken !== refreshToken) {
+            res.status(403).json({ message: 'Invalid refresh token' });
+            return;
+        }
+
+        const newToken = generateToken(user._id.toString());
+        const newRefreshToken = generateRefreshToken(user._id.toString());
+        user.refreshToken = newRefreshToken;
+        await user.save();
+
+        res.json({ success: true, token: newToken, refreshToken: newRefreshToken });
+    } catch (error: any) {
+        res.status(403).json({ message: 'Invalid or expired refresh token' });
+    }
+});
+
+// @route   POST /api/auth/logout
+// @desc    Logout — invalidate refresh token
+// @access  Private
+router.post('/logout', protect, async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        await User.findByIdAndUpdate(req.user!._id, { $unset: { refreshToken: 1 } });
+        res.json({ success: true, message: 'Logged out successfully' });
+    } catch (error: any) {
+        res.status(500).json({ message: 'Server error during logout' });
     }
 });
 
@@ -292,6 +343,9 @@ router.post('/verify-email', async (req: Request, res: Response): Promise<void> 
         }
 
         const token = generateToken(user._id.toString());
+        const refreshToken = generateRefreshToken(user._id.toString());
+        user.refreshToken = refreshToken;
+        await user.save();
 
         await logAudit({
             userId: user._id.toString(),
@@ -304,6 +358,7 @@ router.post('/verify-email', async (req: Request, res: Response): Promise<void> 
         res.json({
             success: true,
             token,
+            refreshToken,
             user: {
                 id: user._id,
                 name: user.name,

@@ -34,6 +34,9 @@ export const authService = {
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
         }
+        if (response.data.refreshToken) {
+            localStorage.setItem('refreshToken', response.data.refreshToken);
+        }
         return response.data;
     },
 
@@ -41,6 +44,9 @@ export const authService = {
         const response = await api.post('/auth/register', data);
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
+        }
+        if (response.data.refreshToken) {
+            localStorage.setItem('refreshToken', response.data.refreshToken);
         }
         return response.data;
     },
@@ -60,6 +66,9 @@ export const authService = {
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
         }
+        if (response.data.refreshToken) {
+            localStorage.setItem('refreshToken', response.data.refreshToken);
+        }
         return response.data;
     },
 
@@ -68,7 +77,11 @@ export const authService = {
         return response.data;
     },
 
-    logout() {
+    async logout() {
+        try {
+            await api.post('/auth/logout');
+        } catch (_) {}
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
     },
 };

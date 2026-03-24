@@ -29,25 +29,18 @@ export interface UserResponse {
 }
 
 export const authService = {
-    async login(data: LoginData) {
+    async login(data: LoginData, rememberMe = true) {
         const response = await api.post('/auth/login', data);
-        if (response.data.token) {
-            localStorage.setItem('token', response.data.token);
-        }
-        if (response.data.refreshToken) {
-            localStorage.setItem('refreshToken', response.data.refreshToken);
-        }
+        const storage = rememberMe ? localStorage : sessionStorage;
+        if (response.data.token) storage.setItem('token', response.data.token);
+        if (response.data.refreshToken) storage.setItem('refreshToken', response.data.refreshToken);
         return response.data;
     },
 
     async register(data: RegisterData) {
         const response = await api.post('/auth/register', data);
-        if (response.data.token) {
-            localStorage.setItem('token', response.data.token);
-        }
-        if (response.data.refreshToken) {
-            localStorage.setItem('refreshToken', response.data.refreshToken);
-        }
+        if (response.data.token) localStorage.setItem('token', response.data.token);
+        if (response.data.refreshToken) localStorage.setItem('refreshToken', response.data.refreshToken);
         return response.data;
     },
 
@@ -63,12 +56,8 @@ export const authService = {
 
     async verifyEmail(email: string, otp: string) {
         const response = await api.post('/auth/verify-email', { email, otp });
-        if (response.data.token) {
-            localStorage.setItem('token', response.data.token);
-        }
-        if (response.data.refreshToken) {
-            localStorage.setItem('refreshToken', response.data.refreshToken);
-        }
+        if (response.data.token) localStorage.setItem('token', response.data.token);
+        if (response.data.refreshToken) localStorage.setItem('refreshToken', response.data.refreshToken);
         return response.data;
     },
 
@@ -78,10 +67,10 @@ export const authService = {
     },
 
     async logout() {
-        try {
-            await api.post('/auth/logout');
-        } catch (_) {}
+        try { await api.post('/auth/logout'); } catch (_) {}
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('refreshToken');
     },
 };

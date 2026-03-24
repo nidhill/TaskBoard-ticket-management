@@ -7,10 +7,15 @@ const api = axios.create({
     headers: { 'Content-Type': 'application/json' },
 });
 
+// Check both storages (sessionStorage = no "remember me", localStorage = "remember me")
+const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+const getRefreshToken = () => localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
+const getTokenStorage = () => (sessionStorage.getItem('token') ? sessionStorage : localStorage);
+
 // Attach access token to every request
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
+        const token = getToken();
         if (token) config.headers.Authorization = `Bearer ${token}`;
         return config;
     },
@@ -46,17 +51,19 @@ api.interceptors.response.use(
             originalRequest._retry = true;
             isRefreshing = true;
 
-            const refreshToken = localStorage.getItem('refreshToken');
+            const refreshToken = getRefreshToken();
             if (!refreshToken) {
                 localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
                 window.location.href = '/auth';
                 return Promise.reject(error);
             }
 
             try {
+                const storage = getTokenStorage();
                 const { data } = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('refreshToken', data.refreshToken);
+                storage.setItem('token', data.token);
+                storage.setItem('refreshToken', data.refreshToken);
                 api.defaults.headers.common.Authorization = `Bearer ${data.token}`;
                 processQueue(null, data.token);
                 originalRequest.headers.Authorization = `Bearer ${data.token}`;
@@ -65,6 +72,8 @@ api.interceptors.response.use(
                 processQueue(refreshError, null);
                 localStorage.removeItem('token');
                 localStorage.removeItem('refreshToken');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('refreshToken');
                 window.location.href = '/auth';
                 return Promise.reject(refreshError);
             } finally {

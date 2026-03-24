@@ -16,7 +16,7 @@ interface AuthContextType {
   profile: Profile | null;
   role: AppRole | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any; needsVerification?: boolean }>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any; needsVerification?: boolean }>;
   signUp: (email: string, password: string, name: string, department: string) => Promise<{ error: any; needsVerification?: boolean; email?: string; devOtp?: string }>;
   signOut: () => Promise<void>;
   updateUserProfile: (data: Partial<UserResponse>) => Promise<{ error: Error | null }>;
@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    const token = localStorage.getItem('token');
+    // Check if user is logged in on mount (localStorage = remember me, sessionStorage = session only)
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token) {
       authService
         .getCurrentUser()
@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .catch((error) => {
           console.error('Error fetching user:', error);
           localStorage.removeItem('token');
+          sessionStorage.removeItem('token');
         })
         .finally(() => {
           setLoading(false);
@@ -59,9 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe = true) => {
     try {
-      const response = await authService.login({ email, password });
+      const response = await authService.login({ email, password }, rememberMe);
       setUser(response.user);
       setProfile({
         id: response.user.id,

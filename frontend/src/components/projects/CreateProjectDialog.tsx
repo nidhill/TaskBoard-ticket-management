@@ -49,10 +49,15 @@ import {
 
 const formSchema = z.object({
     name: z.string().min(1, 'Project name is required'),
-    description: z.string().optional(),
-
-    startDate: z.string().optional(),
-    deliveryDate: z.string().optional(),
+    description: z.string().min(1, 'Description is required'),
+    startDate: z.string()
+        .min(1, 'Start date is required')
+        .refine((date) => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return new Date(date) >= today;
+        }, 'Start date cannot be in the past'),
+    deliveryDate: z.string().min(1, 'End date is required'),
     projectHeads: z.array(z.string()).min(1, 'At least one Project Head is required'),
     members: z.array(z.object({
         user: z.string(),
@@ -64,6 +69,12 @@ const formSchema = z.object({
         url: z.string(),
         type: z.string()
     })).optional(),
+}).refine((data) => {
+    if (!data.startDate || !data.deliveryDate) return true;
+    return new Date(data.deliveryDate) >= new Date(data.startDate);
+}, {
+    message: 'End date must be on or after start date',
+    path: ['deliveryDate'],
 });
 
 interface User {
@@ -98,6 +109,9 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
     const [linkInput, setLinkInput] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [uploadingFiles, setUploadingFiles] = useState(false);
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const watchedStartDate = form.watch('startDate');
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -259,7 +273,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Description</FormLabel>
+                                    <FormLabel>Description *</FormLabel>
                                     <FormControl>
                                         <Textarea placeholder="Enter description" className="resize-y" {...field} />
                                     </FormControl>
@@ -274,9 +288,9 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
                                 name="startDate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Start Date</FormLabel>
+                                        <FormLabel>Start Date *</FormLabel>
                                         <FormControl>
-                                            <Input type="date" {...field} />
+                                            <Input type="date" min={todayStr} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -287,9 +301,9 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
                                 name="deliveryDate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>End Date</FormLabel>
+                                        <FormLabel>End Date *</FormLabel>
                                         <FormControl>
-                                            <Input type="date" {...field} />
+                                            <Input type="date" min={watchedStartDate || todayStr} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

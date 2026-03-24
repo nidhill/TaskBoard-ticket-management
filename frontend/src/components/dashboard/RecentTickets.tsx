@@ -1,8 +1,7 @@
 import { StatusPill } from '@/components/shared/StatusPill';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowRight, AlertCircle, Bug, Box } from 'lucide-react';
+import { ArrowRight, Bug, AlertCircle, Inbox } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -16,72 +15,78 @@ export function RecentTickets({ tickets }: RecentTicketsProps) {
   const recentTickets = tickets.slice(0, 5);
 
   return (
-    <Card className="glass-card">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold">Recent Tickets</CardTitle>
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/tickets" className="flex items-center gap-1">
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">Recent Tickets</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Latest issues raised across projects</p>
+        </div>
+        <Button variant="ghost" size="sm" asChild className="text-gray-500 hover:text-gray-900 -mr-2">
+          <Link to="/tickets" className="flex items-center gap-1.5 text-xs font-medium">
             View all
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {tickets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/20 rounded-lg">
-            <Box className="w-12 h-12 text-muted-foreground/50 mb-3" />
-            <p className="text-muted-foreground font-medium mb-1">No tickets yet</p>
-            <p className="text-xs text-muted-foreground/70 max-w-[200px]">
-              Issues tracked on pages will appear here.
-            </p>
+      </div>
+
+      {/* Body */}
+      {tickets.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+            <Inbox className="w-5 h-5 text-gray-300" />
           </div>
-        ) : (
-          recentTickets.map((ticket) => (
+          <p className="text-sm font-medium text-gray-500 mb-1">No tickets yet</p>
+          <p className="text-xs text-gray-400 max-w-[200px]">Issues raised on tasks will appear here.</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-50">
+          {recentTickets.map((ticket) => (
             <div
               key={ticket._id}
-              className="flex items-start gap-4 p-4 rounded-lg border border-border bg-background/50 hover:bg-muted/50 transition-colors"
+              className="flex items-start gap-4 px-6 py-4 hover:bg-gray-50/60 transition-colors"
             >
+              {/* Icon */}
               <div className={cn(
-                'p-2 rounded-lg',
+                'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5',
                 ticket.issueType === 'dev_bug'
-                  ? 'bg-destructive/10 text-destructive'
-                  : 'bg-warning/10 text-warning'
+                  ? 'bg-red-50 text-red-500'
+                  : 'bg-amber-50 text-amber-500'
               )}>
-                {ticket.issueType === 'dev_bug' ? (
-                  <Bug className="w-4 h-4" />
-                ) : (
-                  <AlertCircle className="w-4 h-4" />
-                )}
+                {ticket.issueType === 'dev_bug'
+                  ? <Bug className="w-3.5 h-3.5" />
+                  : <AlertCircle className="w-3.5 h-3.5" />
+                }
               </div>
+
+              {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {ticket.description}
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground mb-2">
-                  {/* @ts-ignore - pageId is populated */}
-                  {ticket.taskId?.taskName || 'Unknown Task'} • {format(new Date(ticket.createdAt), 'MMM d, yyyy')}
+                <p className="text-sm font-medium text-gray-900 truncate mb-0.5">
+                  {ticket.description}
                 </p>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-5 h-5">
-                      <AvatarImage src={ticket.requestedBy?.avatar_url || ticket.requestedBy?.avatar} />
-                      <AvatarFallback className="text-[10px]">
-                        {ticket.requestedBy?.name?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-muted-foreground">
-                      {ticket.requestedBy?.name || 'Unknown User'}
-                    </span>
-                  </div>
-                  <StatusPill status={ticket.status} />
+                <p className="text-xs text-gray-400">
+                  {/* @ts-ignore */}
+                  {ticket.taskId?.taskName || 'Unknown Task'} · {format(new Date(ticket.createdAt), 'MMM d, yyyy')}
+                </p>
+              </div>
+
+              {/* Right side: avatar + status */}
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <Avatar className="w-5 h-5">
+                    <AvatarImage src={ticket.requestedBy?.avatar_url || ticket.requestedBy?.avatar} />
+                    <AvatarFallback className="text-[9px] bg-gray-100 text-gray-600">
+                      {ticket.requestedBy?.name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-gray-500">{ticket.requestedBy?.name || 'Unknown'}</span>
                 </div>
+                <StatusPill status={ticket.status} />
               </div>
             </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

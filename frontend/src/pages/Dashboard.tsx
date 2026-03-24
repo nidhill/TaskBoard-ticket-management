@@ -1,43 +1,28 @@
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { PageHeader } from '@/components/shared/PageHeader';
-import { StatsCard } from '@/components/dashboard/StatsCard';
+import { SummaryCards } from '@/components/dashboard/analytics/SummaryCards';
+import { StatusDonutChart } from '@/components/dashboard/analytics/StatusDonutChart';
+import { PriorityBarChart } from '@/components/dashboard/analytics/PriorityBarChart';
 import { ProjectsTable } from '@/components/dashboard/ProjectsTable';
 import { RecentTickets } from '@/components/dashboard/RecentTickets';
 import { TaskStatusOverview } from '@/components/dashboard/TaskStatusOverview';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { FolderPlus, FileText, Ticket, CheckCircle, Shield, Users, Clock, AlertTriangle, Loader2 } from 'lucide-react';
-import { SummaryCards } from '@/components/dashboard/analytics/SummaryCards';
-import { StatusDonutChart } from '@/components/dashboard/analytics/StatusDonutChart';
-import { PriorityBarChart } from '@/components/dashboard/analytics/PriorityBarChart';
+import {
+  FolderPlus, FileText, Ticket, CheckCircle,
+  Clock, AlertTriangle, Loader2,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import api from '@/services/api';
-import { Project, Task, Ticket as TicketType } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
-const roleDescriptions = {
-  requester: 'You can view projects, request tasks, and raise tickets (up to 2 per task).',
-  department_head: 'You can approve/reject tasks and unlock tasks after ticket limit is reached.',
-  developer: 'You can update task status and resolve tickets assigned to you.',
-  tech_admin: 'You have full access to all features, user management, and system settings.',
-};
-
-const roleBadgeColors = {
-  requester: 'bg-muted text-muted-foreground',
-  department_head: 'bg-warning/15 text-warning border-warning/30',
-  developer: 'bg-info/15 text-info border-info/30',
-  tech_admin: 'bg-destructive/15 text-destructive border-destructive/30',
-};
-
-const roleLabels = {
-  requester: 'Requester',
-  department_head: 'Department Head',
-  developer: 'Developer',
-  tech_admin: 'Tech Admin',
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
 };
 
 export default function Dashboard() {
@@ -49,64 +34,49 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<any>({
     projects: [],
     recentTickets: [],
-    stats: null
+    stats: null,
   });
-
-  // Derived state fallback to prevent crashes before load
-  const projects = dashboardData.projects;
-  const tickets = dashboardData.recentTickets; // This variable name conflict might be confusing, but 'tickets' in context was full list, now is recent.
-  // Actually, let's keep the names clear. The child components expect arrays.
-
-  // We need to pass "fake" arrays populated with just enough info for the charts if we don't refactor them.
-  // OR better: refactor the call below to pass the stats.
-
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         const statsRes = await api.get('/dashboard/stats');
-
         const { counts, recentTickets, activeProjects } = statsRes.data;
-
-        // Map backend stats to match the props expected by components (or refactor components - here we mock object structure to minimize component refactor)
-        // Actually, we will update the state to hold the stats directly
         setDashboardData({
           projects: activeProjects || [],
           recentTickets: recentTickets || [],
-          stats: counts
+          stats: counts,
         });
-
-        // setProjects(projectsRes.data.projects || []);
-        // setTasks(tasksRes.data.tasks || []);
-        // setTickets(ticketsRes.data.tickets || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load dashboard data',
-          variant: 'destructive',
-        });
+        toast({ title: 'Error', description: 'Failed to load dashboard data', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     };
-
     fetchDashboardData();
   }, []);
 
-  const activeProjectsCount = dashboardData.stats?.activeProjects || 0;
-  // pendingApprovals was tasks.to_do. 
   const pendingApprovals = dashboardData.stats?.tasksByStatus?.to_do || 0;
-  // openTickets: open + in_progress
-  const openTickets = (dashboardData.stats?.ticketsByStatus?.open || 0) + (dashboardData.stats?.ticketsByStatus?.in_progress || 0);
-  const completedTasks = dashboardData.stats?.tasksByStatus?.done || 0;
+  const openTickets =
+    (dashboardData.stats?.ticketsByStatus?.open || 0) +
+    (dashboardData.stats?.ticketsByStatus?.in_progress || 0);
+
+  const quickActions = [
+    ...(permissions.canCreateProject  ? [{ label: 'Create Project',     href: '/projects',           icon: FolderPlus }] : []),
+    ...(permissions.canCreatePage     ? [{ label: 'Request Task',        href: '/tasks?create=true',  icon: FileText   }] : []),
+    ...(permissions.canCreateTicket   ? [{ label: 'Raise Ticket',        href: '/tickets?create=true',icon: Ticket     }] : []),
+    ...(permissions.canApprovePage    ? [{ label: 'Review Approvals',    href: '/tasks?status=to_do', icon: CheckCircle,  count: pendingApprovals }] : []),
+    ...(permissions.canUpdatePageStatus?[{ label: 'Update Task Status',  href: '/tasks',              icon: Clock      }] : []),
+    ...(permissions.canResolveTicket  ? [{ label: 'Resolve Tickets',     href: '/tickets?status=open',icon: AlertTriangle,count: openTickets      }] : []),
+  ];
 
   if (loading) {
     return (
       <MainLayout>
         <div className="flex h-[calc(100vh-100px)] items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-7 h-7 animate-spin text-gray-400" />
         </div>
       </MainLayout>
     );
@@ -114,96 +84,70 @@ export default function Dashboard() {
 
   return (
     <MainLayout>
-      <PageHeader
-        title={`Welcome back, ${profile?.name?.split(' ')[0] || 'User'}`}
-        description="Here's what's happening with your projects today."
-        actions={
-          permissions.canCreateProject && (
-            <Button asChild>
-              <Link to="/projects?create=true">
-                <FolderPlus className="w-4 h-4 mr-2" />
-                New Project
+
+      {/* ── Header ───────────────────────────────────────── */}
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[1.5px] text-gray-400 mb-2">
+            {format(new Date(), 'EEEE, MMMM d, yyyy')}
+          </p>
+          <h1 style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+            className="text-[42px] font-bold leading-[1.05] tracking-tight text-gray-900">
+            {getGreeting()},<br />{profile?.name?.split(' ')[0] || 'there'}
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm leading-relaxed">
+            Here's what's happening with your projects today.
+          </p>
+        </div>
+        {permissions.canCreateProject && (
+          <Button asChild className="bg-gray-900 hover:bg-gray-800 text-white h-10 px-5 rounded-lg font-medium shrink-0">
+            <Link to="/projects?create=true">
+              <FolderPlus className="w-4 h-4 mr-2" />
+              New Project
+            </Link>
+          </Button>
+        )}
+      </div>
+
+      {/* ── Quick Actions ─────────────────────────────────── */}
+      {quickActions.length > 0 && (
+        <div className="mb-8">
+          <p className="text-[10px] font-semibold uppercase tracking-[1.6px] text-gray-400 mb-3">
+            Quick Actions
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {quickActions.map((action, i) => (
+              <Link
+                key={i}
+                to={action.href}
+                className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 hover:border-gray-400 hover:shadow-sm transition-all group select-none"
+              >
+                <div className="w-6 h-6 rounded-md bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0">
+                  <action.icon className="w-3.5 h-3.5 text-gray-600" />
+                </div>
+                <span className="text-sm font-medium text-gray-700">{action.label}</span>
+                {(action as any).count !== undefined && (action as any).count > 0 && (
+                  <span className="text-[11px] font-bold text-gray-500 bg-gray-100 rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+                    {(action as any).count}
+                  </span>
+                )}
               </Link>
-            </Button>
-          )
-        }
-      />
-
-
-
-      {/* Role-Specific Quick Actions */}
-      {role && (
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Quick Actions for {roleLabels[role]}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            {permissions.canCreateProject && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/projects">
-                  <FolderPlus className="w-4 h-4 mr-2" />
-                  Create Project
-                </Link>
-              </Button>
-            )}
-            {permissions.canCreatePage && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/tasks?create=true">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Request Task
-                </Link>
-              </Button>
-            )}
-            {permissions.canCreateTicket && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/tickets?create=true">
-                  <Ticket className="w-4 h-4 mr-2" />
-                  Raise Ticket
-                </Link>
-              </Button>
-            )}
-            {permissions.canApprovePage && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/tasks?status=to_do">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Review Approvals ({pendingApprovals})
-                </Link>
-              </Button>
-            )}
-            {permissions.canUpdatePageStatus && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/tasks">
-                  <Clock className="w-4 h-4 mr-2" />
-                  Update Task Status
-                </Link>
-              </Button>
-            )}
-            {permissions.canResolveTicket && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/tickets?status=open">
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  Resolve Tickets ({openTickets})
-                </Link>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </div>
       )}
 
-      {/* Summary Stats */}
-      {/* We need to update SummaryCards to accept stats object */}
+      {/* ── Summary Stats ─────────────────────────────────── */}
       <SummaryCards stats={dashboardData.stats?.recentStats} />
 
-      {/* Analytics Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      {/* ── Charts ───────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
         <StatusDonutChart stats={dashboardData.stats?.tasksByStatus} />
         <PriorityBarChart stats={dashboardData.stats?.tasksByPriority} />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+      {/* ── Projects + Task Status ────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-6">
         <div className="xl:col-span-2">
           <ProjectsTable projects={dashboardData.projects} />
         </div>
@@ -212,8 +156,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Tickets */}
+      {/* ── Recent Tickets ────────────────────────────────── */}
       <RecentTickets tickets={dashboardData.recentTickets} />
+
     </MainLayout>
   );
 }

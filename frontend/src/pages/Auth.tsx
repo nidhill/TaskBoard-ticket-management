@@ -97,6 +97,10 @@ export default function Auth() {
 
     if (result.error) {
       setError(typeof result.error === 'string' ? result.error : 'Registration failed. Please try again.');
+    } else if (result.needsVerification) {
+      setVerifyEmail(result.email || signupEmail);
+      setShowVerify(true);
+      setError(null);
     }
   };
 

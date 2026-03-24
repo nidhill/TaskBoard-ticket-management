@@ -37,7 +37,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // Create user
+        // Create user as unverified
         const user = await User.create({
             name,
             email,
@@ -45,38 +45,28 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             department,
             role: role || 'user',
             avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
-            isVerified: true,
+            isVerified: false,
         });
 
-        // Generate token for immediate login
-        const token = generateToken(user._id.toString());
+        // Generate OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const salt = await bcrypt.genSalt(10);
+        user.emailVerifyOtp = await bcrypt.hash(otp, salt);
+        user.emailVerifyExpire = new Date(Date.now() + 10 * 60 * 1000);
+        await user.save();
 
-        // Send welcome email
+        // Send verification OTP email
         try {
-            await sendWelcomeEmail(user.email, user.name);
+            await sendVerificationEmail(user.email, otp);
         } catch (emailError) {
-            console.error('Failed to send welcome email:', emailError);
+            console.error('Failed to send verification email:', emailError);
         }
-
-        await logAudit({
-            userId: user._id.toString(),
-            action: 'REGISTER',
-            details: `User ${user.name} registered`,
-            resourceId: user._id.toString(),
-            resourceType: 'User'
-        });
 
         res.status(201).json({
             success: true,
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                department: user.department,
-                avatar_url: user.avatar_url,
-            },
+            needsVerification: true,
+            email: user.email,
+            message: 'Account created. Please verify your email with the OTP sent.',
         });
     } catch (error: any) {
         console.error('Register error:', error);

@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task } from "@/types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { MoreHorizontal } from "lucide-react";
 
 interface PriorityBarChartProps {
     stats: {
@@ -11,9 +11,9 @@ interface PriorityBarChartProps {
 }
 
 const priorityColors: Record<string, string> = {
-    high: '#f97316', // orange
-    medium: '#eab308', // yellow
-    low: '#3b82f6', // blue
+    high: '#f97316',
+    medium: '#eab308',
+    low: '#3b82f6',
 };
 
 const priorityLabels: Record<string, string> = {
@@ -31,63 +31,68 @@ export function PriorityBarChart({ stats }: PriorityBarChartProps) {
 
     const total = (stats?.high || 0) + (stats?.medium || 0) + (stats?.low || 0);
 
-    if (total === 0) {
-        return (
-            <Card className="glass-card h-full">
-                <CardHeader>
-                    <CardTitle className="text-lg font-semibold">Priority breakdown</CardTitle>
-                    <p className="text-xs text-muted-foreground">in the last 14 days</p>
-                </CardHeader>
-                <CardContent className="h-[300px] flex items-center justify-center text-muted-foreground">
-                    No data available
-                </CardContent>
-            </Card>
-        )
-    }
-
     return (
-        <Card className="glass-card h-full">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-semibold">Priority breakdown</CardTitle>
-                <p className="text-xs text-muted-foreground">Current workload distribution</p>
-            </CardHeader>
-            <CardContent>
-                <div className="h-[250px] w-full mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data} barSize={40}>
-                            <XAxis
-                                dataKey="name"
-                                tickLine={false}
-                                axisLine={false}
-                                tickFormatter={(value) => ''} // Hide x-axis labels as we use legend below
-                                height={0}
-                            />
-                            <Tooltip
-                                cursor={{ fill: 'transparent' }}
-                                contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: 'hsl(var(--popover))', color: 'hsl(var(--popover-foreground))' }}
-                            />
-                            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                                {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={priorityColors[entry.name]} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm h-full">
+            {/* Card header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+                <div>
+                    <h3 className="text-sm font-semibold text-gray-900">Priority breakdown</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Current workload distribution</p>
                 </div>
+                <button className="w-7 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
+                    <MoreHorizontal className="w-4 h-4" />
+                </button>
+            </div>
 
-                <div className="grid grid-cols-2 gap-y-2 mt-4">
-                    {Object.keys(priorityLabels).map((priority) => (
-                        <div key={priority} className="flex items-center gap-2 text-sm">
-                            <span className="font-bold text-lg" style={{ color: priorityColors[priority] }}>
-                                {priority === 'high' ? '^' : priority === 'medium' ? '=' : '⌄'}
-                            </span>
-                            <span className="text-muted-foreground" style={{ color: priorityColors[priority] }}>
-                                {priorityLabels[priority]}
-                            </span>
-                        </div>
-                    ))}
+            {/* Card body */}
+            {total === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center px-6">
+                    <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
+                            <rect x="3" y="3" width="4" height="14" rx="1" /><rect x="10" y="7" width="4" height="10" rx="1" /><rect x="17" y="5" width="4" height="12" rx="1" />
+                        </svg>
+                    </div>
+                    <p className="text-sm font-medium text-gray-500 mb-1">No data available</p>
+                    <p className="text-xs text-gray-400 max-w-[200px]">Insufficient data to generate breakdown</p>
                 </div>
-            </CardContent>
-        </Card>
+            ) : (
+                <div className="px-6 py-4">
+                    <div className="h-[220px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data} barSize={44}>
+                                <XAxis
+                                    dataKey="name"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickFormatter={() => ''}
+                                    height={0}
+                                />
+                                <YAxis hide />
+                                <Tooltip
+                                    cursor={{ fill: 'rgba(0,0,0,.03)' }}
+                                    contentStyle={{ borderRadius: '8px', border: '1px solid #f3f4f6', backgroundColor: '#fff', fontSize: 12 }}
+                                    formatter={(val: any, name: any) => [val, priorityLabels[name] || name]}
+                                />
+                                <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+                                    {data.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={priorityColors[entry.name]} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    <div className="flex gap-5 mt-3">
+                        {Object.keys(priorityLabels).map((priority) => (
+                            <div key={priority} className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: priorityColors[priority] }} />
+                                <span className="text-xs text-gray-500">{priorityLabels[priority]}</span>
+                                <span className="text-xs font-semibold text-gray-800">{(stats as any)?.[priority] || 0}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

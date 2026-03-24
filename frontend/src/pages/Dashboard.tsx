@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { SummaryCards } from '@/components/dashboard/analytics/SummaryCards';
 import { StatusDonutChart } from '@/components/dashboard/analytics/StatusDonutChart';
@@ -7,10 +6,9 @@ import { PriorityBarChart } from '@/components/dashboard/analytics/PriorityBarCh
 import { ProjectsTable } from '@/components/dashboard/ProjectsTable';
 import { RecentTickets } from '@/components/dashboard/RecentTickets';
 import { TaskStatusOverview } from '@/components/dashboard/TaskStatusOverview';
-import { Button } from '@/components/ui/button';
 import {
   FolderPlus, FileText, Ticket, CheckCircle,
-  Clock, AlertTriangle, Loader2,
+  Clock, AlertTriangle, Loader2, Rocket,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,15 +16,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import api from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 
-const getGreeting = () => {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
-};
-
 export default function Dashboard() {
-  const { profile, role } = useAuth();
+  const { profile } = useAuth();
   const permissions = usePermissions();
   const { toast } = useToast();
 
@@ -64,12 +55,12 @@ export default function Dashboard() {
     (dashboardData.stats?.ticketsByStatus?.in_progress || 0);
 
   const quickActions = [
-    ...(permissions.canCreateProject  ? [{ label: 'Create Project',     href: '/projects',           icon: FolderPlus }] : []),
-    ...(permissions.canCreatePage     ? [{ label: 'Request Task',        href: '/tasks?create=true',  icon: FileText   }] : []),
-    ...(permissions.canCreateTicket   ? [{ label: 'Raise Ticket',        href: '/tickets?create=true',icon: Ticket     }] : []),
-    ...(permissions.canApprovePage    ? [{ label: 'Review Approvals',    href: '/tasks?status=to_do', icon: CheckCircle,  count: pendingApprovals }] : []),
-    ...(permissions.canUpdatePageStatus?[{ label: 'Update Task Status',  href: '/tasks',              icon: Clock      }] : []),
-    ...(permissions.canResolveTicket  ? [{ label: 'Resolve Tickets',     href: '/tickets?status=open',icon: AlertTriangle,count: openTickets      }] : []),
+    ...(permissions.canCreateProject   ? [{ label: 'Create Project',    href: '/projects',            icon: FolderPlus   }] : []),
+    ...(permissions.canCreatePage      ? [{ label: 'Request Task',       href: '/tasks?create=true',   icon: FileText     }] : []),
+    ...(permissions.canCreateTicket    ? [{ label: 'Raise Ticket',       href: '/tickets?create=true', icon: Ticket       }] : []),
+    ...(permissions.canApprovePage     ? [{ label: 'Update Status',      href: '/tasks?status=to_do',  icon: CheckCircle, count: pendingApprovals }] : []),
+    ...(permissions.canUpdatePageStatus? [{ label: 'Update Task Status', href: '/tasks',               icon: Clock        }] : []),
+    ...(permissions.canResolveTicket   ? [{ label: 'Resolve Tickets',    href: '/tickets?status=open', icon: AlertTriangle, count: openTickets }] : []),
   ];
 
   if (loading) {
@@ -85,68 +76,85 @@ export default function Dashboard() {
   return (
     <MainLayout>
 
-      {/* ── Header ───────────────────────────────────────── */}
-      <div className="flex items-end justify-between mb-8">
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between mb-9">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[1.5px] text-gray-400 mb-2">
-            {format(new Date(), 'EEEE, MMMM d, yyyy')}
-          </p>
-          <h1 style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
-            className="text-[42px] font-bold leading-[1.05] tracking-tight text-gray-900">
-            {getGreeting()},<br />{profile?.name?.split(' ')[0] || 'there'}
+          <h1
+            style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+            className="text-[52px] font-bold leading-[1.05] tracking-tight text-gray-900 mb-2"
+          >
+            Welcome back
           </h1>
-          <p className="text-gray-500 mt-2 text-sm leading-relaxed">
-            Here's what's happening with your projects today.
-          </p>
+          <p className="text-[15px] text-gray-400">Your workspace at a glance.</p>
         </div>
         {permissions.canCreateProject && (
-          <Button asChild className="bg-gray-900 hover:bg-gray-800 text-white h-10 px-5 rounded-lg font-medium shrink-0">
-            <Link to="/projects?create=true">
-              <FolderPlus className="w-4 h-4 mr-2" />
-              New Project
-            </Link>
-          </Button>
+          <Link
+            to="/projects?create=true"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 9,
+              background: '#111', color: '#fff',
+              padding: '12px 22px', borderRadius: 10,
+              fontSize: 14, fontWeight: 600, textDecoration: 'none',
+              flexShrink: 0, marginTop: 8,
+              transition: 'background .15s',
+            }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#1f1f1f')}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = '#111')}
+          >
+            <Rocket className="w-4 h-4" />
+            New Project
+          </Link>
         )}
       </div>
 
-      {/* ── Quick Actions ─────────────────────────────────── */}
+      {/* ── Quick Actions ── */}
       {quickActions.length > 0 && (
         <div className="mb-8">
-          <p className="text-[10px] font-semibold uppercase tracking-[1.6px] text-gray-400 mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-[1.8px] text-gray-400 mb-4">
             Quick Actions
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {quickActions.map((action, i) => (
               <Link
                 key={i}
                 to={action.href}
-                className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 hover:border-gray-400 hover:shadow-sm transition-all group select-none"
+                className="group flex flex-col items-center justify-center gap-3 bg-white border border-gray-100 rounded-xl px-6 py-5 min-w-[130px] flex-1 hover:border-gray-300 hover:shadow-md transition-all select-none"
+                style={{ textDecoration: 'none', maxWidth: 200 }}
               >
-                <div className="w-6 h-6 rounded-md bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0">
-                  <action.icon className="w-3.5 h-3.5 text-gray-600" />
+                <div className="w-10 h-10 rounded-xl bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors relative">
+                  <action.icon className="w-4.5 h-4.5 text-gray-600" style={{ width: 18, height: 18 }} />
+                  {(action as any).count !== undefined && (action as any).count > 0 && (
+                    <span style={{
+                      position: 'absolute', top: -5, right: -5,
+                      background: '#111', color: '#fff',
+                      fontSize: 9, fontWeight: 700,
+                      minWidth: 16, height: 16,
+                      borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: '0 4px',
+                    }}>
+                      {(action as any).count}
+                    </span>
+                  )}
                 </div>
-                <span className="text-sm font-medium text-gray-700">{action.label}</span>
-                {(action as any).count !== undefined && (action as any).count > 0 && (
-                  <span className="text-[11px] font-bold text-gray-500 bg-gray-100 rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
-                    {(action as any).count}
-                  </span>
-                )}
+                <span className="text-[12px] font-semibold text-gray-600 group-hover:text-gray-900 text-center leading-tight transition-colors">
+                  {action.label}
+                </span>
               </Link>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── Summary Stats ─────────────────────────────────── */}
+      {/* ── Summary Stats ── */}
       <SummaryCards stats={dashboardData.stats?.recentStats} />
 
-      {/* ── Charts ───────────────────────────────────────── */}
+      {/* ── Charts ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
         <StatusDonutChart stats={dashboardData.stats?.tasksByStatus} />
         <PriorityBarChart stats={dashboardData.stats?.tasksByPriority} />
       </div>
 
-      {/* ── Projects + Task Status ────────────────────────── */}
+      {/* ── Projects + Task Status ── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-6">
         <div className="xl:col-span-2">
           <ProjectsTable projects={dashboardData.projects} />
@@ -156,7 +164,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Recent Tickets ────────────────────────────────── */}
+      {/* ── Recent Tickets ── */}
       <RecentTickets tickets={dashboardData.recentTickets} />
 
     </MainLayout>

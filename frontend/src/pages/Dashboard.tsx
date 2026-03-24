@@ -8,7 +8,7 @@ import { RecentTickets } from '@/components/dashboard/RecentTickets';
 import { TaskStatusOverview } from '@/components/dashboard/TaskStatusOverview';
 import {
   FolderPlus, FileText, Ticket, CheckCircle,
-  Clock, AlertTriangle, Loader2, Rocket,
+  Clock, AlertTriangle, Loader2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -77,34 +77,14 @@ export default function Dashboard() {
     <MainLayout>
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between mb-9">
-        <div>
-          <h1
-            style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
-            className="text-[52px] font-bold leading-[1.05] tracking-tight text-gray-900 mb-2"
-          >
-            Welcome back
-          </h1>
-          <p className="text-[15px] text-gray-400">Your workspace at a glance.</p>
-        </div>
-        {permissions.canCreateProject && (
-          <Link
-            to="/projects?create=true"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 9,
-              background: '#111', color: '#fff',
-              padding: '12px 22px', borderRadius: 10,
-              fontSize: 14, fontWeight: 600, textDecoration: 'none',
-              flexShrink: 0, marginTop: 8,
-              transition: 'background .15s',
-            }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#1f1f1f')}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = '#111')}
-          >
-            <Rocket className="w-4 h-4" />
-            New Project
-          </Link>
-        )}
+      <div className="mb-9">
+        <h1
+          style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+          className="text-[52px] font-bold leading-[1.05] tracking-tight text-gray-900 mb-2"
+        >
+          Welcome back
+        </h1>
+        <p className="text-[15px] text-gray-400">Your workspace at a glance.</p>
       </div>
 
       {/* ── Quick Actions ── */}

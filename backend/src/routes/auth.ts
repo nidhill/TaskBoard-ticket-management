@@ -106,6 +106,16 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        // Block unverified users
+        if (!user.isVerified) {
+            res.status(403).json({
+                message: 'Please verify your email before logging in.',
+                needsVerification: true,
+                email: user.email,
+            });
+            return;
+        }
+
         // Generate token
         const token = generateToken(user._id.toString());
         const refreshToken = generateRefreshToken(user._id.toString());

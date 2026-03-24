@@ -393,6 +393,13 @@ export default function Auth() {
     setIsSubmitting(true);
     const result = await signIn(loginEmail, loginPassword, rememberMe);
     setIsSubmitting(false);
+    if (result.needsVerification) {
+      // Account exists but email not verified — send them to OTP screen
+      setVerifyEmail(result.email || loginEmail);
+      setShowVerify(true);
+      setError(null);
+      return;
+    }
     if (result.error) setError(typeof result.error === 'string' ? result.error : 'Invalid credentials. Please try again.');
   };
 

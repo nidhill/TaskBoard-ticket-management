@@ -16,7 +16,7 @@ interface AuthContextType {
   profile: Profile | null;
   role: AppRole | null;
   loading: boolean;
-  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any; needsVerification?: boolean }>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any; needsVerification?: boolean; email?: string }>;
   signUp: (email: string, password: string, name: string, department: string) => Promise<{ error: any; needsVerification?: boolean; email?: string; devOtp?: string }>;
   signOut: () => Promise<void>;
   updateUserProfile: (data: Partial<UserResponse>) => Promise<{ error: Error | null }>;
@@ -78,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return {
         error: data?.message || error.message || 'Login failed',
         needsVerification: data?.needsVerification || false,
+        email: data?.email,
       };
     }
   };

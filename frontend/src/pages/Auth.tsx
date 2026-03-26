@@ -353,6 +353,9 @@ export default function Auth() {
   // Per-field validation
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // Session expired banner
+  const sessionExpired = new URLSearchParams(location.search).get('session') === 'expired';
+
   useEffect(() => {
     if (user && !loading) {
       const from = (location.state as { from?: Location })?.from?.pathname || '/';
@@ -509,6 +512,23 @@ export default function Auth() {
               </div>
               <span style={{ fontSize: 20, fontWeight: 700, color: '#111', letterSpacing: '-.2px', fontFamily: 'Outfit, sans-serif' }}>Slate</span>
             </div>
+
+            {/* ── Session expired banner ──────────────────── */}
+            {sessionExpired && !showVerify && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: '#fef3c7', border: '1px solid #fbbf24',
+                borderRadius: 8, padding: '11px 14px', marginBottom: 24,
+                animation: 'sl-fade-up .3s ease both',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span style={{ fontSize: 13, color: '#92400e', fontWeight: 500 }}>
+                  Your session expired after 1 hour of inactivity. Please sign in again.
+                </span>
+              </div>
+            )}
 
             {/* ── OTP VERIFY ─────────────────────────────── */}
             {showVerify ? (

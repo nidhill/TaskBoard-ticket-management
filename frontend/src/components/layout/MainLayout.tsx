@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useAutoLogout } from '@/hooks/useAutoLogout';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -10,6 +11,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   usePageTitle();
+  useAutoLogout();
 
   return (
     <SidebarProvider>

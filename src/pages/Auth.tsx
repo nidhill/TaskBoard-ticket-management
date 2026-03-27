@@ -254,50 +254,112 @@ function OtpBoxes({ value, onChange, disabled }: { value: string; onChange: (v: 
 
 /* ─── Machine art (left panel bottom) ──────────────────── */
 function MachineArt() {
+  const cols = [
+    {
+      label: 'To Do', color: 'rgba(255,255,255,.18)',
+      cards: [
+        { w: '88%', accent: false }, { w: '72%', accent: false },
+      ],
+    },
+    {
+      label: 'In Progress', color: '#d97706',
+      cards: [
+        { w: '80%', accent: true }, { w: '60%', accent: true },
+      ],
+    },
+    {
+      label: 'Done', color: '#4ade80',
+      cards: [
+        { w: '76%', accent: false },
+      ],
+    },
+  ];
+
   return (
     <div style={{
-      borderRadius: 10, background: '#060606',
-      border: '1px solid rgba(255,255,255,.055)',
-      overflow: 'hidden', height: 196, position: 'relative', flexShrink: 0,
+      borderRadius: 10,
+      background: '#080808',
+      border: '1px solid rgba(255,255,255,.07)',
+      overflow: 'hidden',
+      flexShrink: 0,
+      position: 'relative',
     }}>
+      {/* Top bar */}
       <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: 70,
-        background: 'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.045) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute', top: 14, left: 18, right: 18, height: 106,
-        background: 'linear-gradient(155deg, #1c1c1c 0%, #111 55%, #0d0d0d 100%)',
-        borderRadius: 7, border: '1px solid rgba(255,255,255,.08)', overflow: 'hidden',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 14px 8px',
+        borderBottom: '1px solid rgba(255,255,255,.06)',
       }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: 'linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px)',
-          backgroundSize: '20px 20px',
-        }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent)' }} />
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 1, background: 'linear-gradient(180deg, rgba(255,255,255,.1), transparent)' }} />
-        <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14 }}>
-          {[82, 58, 70, 44].map((w, i) => (
-            <div key={i} style={{ height: 1, width: `${w}%`, marginBottom: i < 3 ? 7 : 0, background: 'rgba(255,255,255,.055)', borderRadius: 1 }} />
+        {/* Mini logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <svg width="13" height="13" viewBox="0 0 22 22" fill="none">
+            <rect x="1" y="1" width="8.5" height="8.5" rx="2" fill="rgba(255,255,255,0.5)"/>
+            <rect x="12.5" y="1" width="8.5" height="8.5" rx="2" fill="#d97706"/>
+            <rect x="1" y="12.5" width="8.5" height="8.5" rx="2" fill="rgba(255,255,255,0.5)"/>
+            <rect x="12.5" y="12.5" width="8.5" height="8.5" rx="2" fill="rgba(255,255,255,0.2)"/>
+          </svg>
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.5)', letterSpacing: '.3px', fontFamily: 'Bricolage Grotesque, sans-serif' }}>Slate</span>
+        </div>
+        {/* Traffic lights */}
+        <div style={{ display: 'flex', gap: 5 }}>
+          {['#4ade80', 'rgba(255,255,255,.12)', 'rgba(255,255,255,.12)'].map((c, i) => (
+            <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: c, animation: i === 0 ? 'sl-led 3s ease-in-out infinite' : 'none' }} />
           ))}
         </div>
-        <div style={{ position: 'absolute', top: 9, right: 12, display: 'flex', gap: 5 }}>
-          {[true, false, false].map((active, i) => (
-            <div key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: active ? '#4ade80' : 'rgba(255,255,255,.1)', animation: active ? 'sl-led 3s ease-in-out infinite' : 'none' }} />
-          ))}
-        </div>
-        <div style={{ position: 'absolute', top: 22, left: 14, width: 36, height: 36, border: '1px solid rgba(255,255,255,.06)', borderRadius: 3, transform: 'rotate(12deg)' }} />
-        <div style={{ position: 'absolute', top: 30, left: 22, width: 36, height: 36, border: '1px solid rgba(255,255,255,.04)', borderRadius: 3, transform: 'rotate(12deg)' }} />
       </div>
-      <div style={{ position: 'absolute', bottom: 10, left: 18, right: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {[{ h: 17, op: 0.075, dots: 2, green: 0 }, { h: 14, op: 0.055, dots: 3, green: -1 }, { h: 12, op: 0.04, dots: 1, green: -1 }, { h: 9, op: 0.028, dots: 4, green: -1 }].map((rack, i) => (
-          <div key={i} style={{ height: rack.h, background: `rgba(255,255,255,${rack.op})`, borderRadius: 2, border: `1px solid rgba(255,255,255,${rack.op * 1.4})`, display: 'flex', alignItems: 'center', paddingLeft: 9, gap: 4 }}>
-            {Array.from({ length: rack.dots }).map((_, j) => (
-              <div key={j} style={{ width: 3, height: 3, borderRadius: '50%', background: j === rack.green ? 'rgba(74,222,128,.75)' : 'rgba(255,255,255,.1)' }} />
-            ))}
+
+      {/* Board columns */}
+      <div style={{ display: 'flex', gap: 8, padding: '10px 12px 12px' }}>
+        {cols.map((col) => (
+          <div key={col.label} style={{ flex: 1, minWidth: 0 }}>
+            {/* Column header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 7 }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: col.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,.3)', letterSpacing: '1.2px', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {col.label}
+              </span>
+            </div>
+            {/* Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {col.cards.map((card, ci) => (
+                <div key={ci} style={{
+                  background: 'rgba(255,255,255,.04)',
+                  border: `1px solid ${card.accent ? 'rgba(217,119,6,.25)' : 'rgba(255,255,255,.07)'}`,
+                  borderRadius: 5,
+                  padding: '7px 8px',
+                }}>
+                  {/* Title bar */}
+                  <div style={{ height: 3, width: card.w, background: card.accent ? 'rgba(217,119,6,.5)' : 'rgba(255,255,255,.15)', borderRadius: 2, marginBottom: 5 }} />
+                  {/* Sub lines */}
+                  <div style={{ height: 2, width: '55%', background: 'rgba(255,255,255,.07)', borderRadius: 1, marginBottom: 3 }} />
+                  <div style={{ height: 2, width: '35%', background: 'rgba(255,255,255,.05)', borderRadius: 1, marginBottom: 6 }} />
+                  {/* Avatar dot + priority */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: card.accent ? 'rgba(217,119,6,.4)' : 'rgba(255,255,255,.1)' }} />
+                    <div style={{ height: 3, width: 18, borderRadius: 2, background: card.accent ? 'rgba(217,119,6,.35)' : 'rgba(255,255,255,.08)' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
+      </div>
+
+      {/* Bottom stats bar */}
+      <div style={{
+        borderTop: '1px solid rgba(255,255,255,.05)',
+        padding: '7px 14px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {[{ label: '5 tasks', color: 'rgba(255,255,255,.25)' }, { label: '2 active', color: '#d97706' }].map((s) => (
+            <span key={s.label} style={{ fontSize: 8.5, fontWeight: 600, color: s.color, letterSpacing: '.4px' }}>{s.label}</span>
+          ))}
+        </div>
+        {/* Progress bar */}
+        <div style={{ width: 52, height: 3, background: 'rgba(255,255,255,.08)', borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{ width: '40%', height: '100%', background: '#d97706', borderRadius: 2 }} />
+        </div>
       </div>
     </div>
   );

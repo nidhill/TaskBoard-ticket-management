@@ -34,14 +34,6 @@ const styles = `
   @keyframes sl-spin {
     to { transform: rotate(360deg); }
   }
-  @keyframes sl-amber-glow {
-    0%,100% { opacity:1; }
-    50%      { opacity:.5; }
-  }
-  @keyframes sl-tile-fade {
-    0%,100% { opacity:.55; }
-    50%      { opacity:.95; }
-  }
   @keyframes sl-float-a {
     0%,100% { transform:translateY(0); }
     50%     { transform:translateY(-2px); }
@@ -305,11 +297,6 @@ function MachineArt() {
         borderBottom: '1px solid rgba(255,255,255,.06)',
         background: 'rgba(255,255,255,.02)',
       }}>
-        <span style={{
-          fontSize: 10, fontWeight: 700, letterSpacing: '.3px',
-          color: 'rgba(255,255,255,.45)',
-          fontFamily: 'Outfit, sans-serif',
-        }}>Slate</span>
         {/* Status dots */}
         <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
           {['#4ade80', 'rgba(255,255,255,.12)', 'rgba(255,255,255,.12)'].map((c, i) => (

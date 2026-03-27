@@ -305,28 +305,11 @@ function MachineArt() {
         borderBottom: '1px solid rgba(255,255,255,.06)',
         background: 'rgba(255,255,255,.02)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          {/* Animated logo mark */}
-          <svg width="14" height="14" viewBox="0 0 22 22" fill="none">
-            <rect x="1" y="1" width="8.5" height="8.5" rx="2"
-              fill="rgba(255,255,255,0.55)"
-              style={{ animation: 'sl-tile-fade 3s ease-in-out infinite' }} />
-            <rect x="12.5" y="1" width="8.5" height="8.5" rx="2"
-              fill="#d97706"
-              style={{ animation: 'sl-amber-glow 2s ease-in-out infinite' }} />
-            <rect x="1" y="12.5" width="8.5" height="8.5" rx="2"
-              fill="rgba(255,255,255,0.55)"
-              style={{ animation: 'sl-tile-fade 3s ease-in-out infinite 1s' }} />
-            <rect x="12.5" y="12.5" width="8.5" height="8.5" rx="2"
-              fill="rgba(255,255,255,0.2)"
-              style={{ animation: 'sl-tile-fade 3s ease-in-out infinite 0.5s' }} />
-          </svg>
-          <span style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '.3px',
-            color: 'rgba(255,255,255,.45)',
-            fontFamily: 'Bricolage Grotesque, sans-serif',
-          }}>Slate</span>
-        </div>
+        <span style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: '.3px',
+          color: 'rgba(255,255,255,.45)',
+          fontFamily: 'Outfit, sans-serif',
+        }}>Slate</span>
         {/* Status dots */}
         <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
           {['#4ade80', 'rgba(255,255,255,.12)', 'rgba(255,255,255,.12)'].map((c, i) => (
@@ -622,27 +605,7 @@ export default function Auth() {
           display: 'flex', flexDirection: 'column', padding: '44px 32px',
         }}>
           <div style={{ marginBottom: 52 }}>
-            {/* Logo lockup */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-              <div style={{
-                width: 40, height: 40, flexShrink: 0,
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.13)',
-                borderRadius: 11,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                  <rect x="1" y="1" width="8.5" height="8.5" rx="2" fill="rgba(255,255,255,0.75)"/>
-                  <rect x="12.5" y="1" width="8.5" height="8.5" rx="2" fill="#d97706"/>
-                  <rect x="1" y="12.5" width="8.5" height="8.5" rx="2" fill="rgba(255,255,255,0.75)"/>
-                  <rect x="12.5" y="12.5" width="8.5" height="8.5" rx="2" fill="rgba(255,255,255,0.3)"/>
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontFamily: 'Bricolage Grotesque, sans-serif', fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-.3px', lineHeight: 1.1 }}>Slate</div>
-                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'rgba(255,255,255,.28)', marginTop: 3 }}>Project Management</div>
-              </div>
-            </div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: 'white', letterSpacing: '-.2px', marginBottom: 14, fontFamily: 'Outfit, sans-serif' }}>Slate</div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,.28)', lineHeight: 1.65, maxWidth: 230 }}>
               The Digital Monolith. High-efficiency workspace for editorial software.
             </p>
@@ -676,23 +639,7 @@ export default function Auth() {
 
             {/* Mobile logo — only visible on small screens */}
             <div className="sl-mobile-logo">
-              <div style={{
-                width: 36, height: 36, flexShrink: 0,
-                background: '#111', border: '1px solid rgba(0,0,0,0.12)',
-                borderRadius: 10,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
-                  <rect x="1" y="1" width="8.5" height="8.5" rx="2" fill="rgba(255,255,255,0.85)"/>
-                  <rect x="12.5" y="1" width="8.5" height="8.5" rx="2" fill="#d97706"/>
-                  <rect x="1" y="12.5" width="8.5" height="8.5" rx="2" fill="rgba(255,255,255,0.85)"/>
-                  <rect x="12.5" y="12.5" width="8.5" height="8.5" rx="2" fill="rgba(255,255,255,0.4)"/>
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontFamily: 'Bricolage Grotesque, sans-serif', fontSize: 19, fontWeight: 800, color: '#111', letterSpacing: '-.3px', lineHeight: 1.1 }}>Slate</div>
-                <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(0,0,0,.35)', marginTop: 2 }}>Project Management</div>
-              </div>
+              <span style={{ fontSize: 20, fontWeight: 700, color: '#111', letterSpacing: '-.2px', fontFamily: 'Outfit, sans-serif' }}>Slate</span>
             </div>
 
             {/* ── Session expired banner ──────────────────── */}

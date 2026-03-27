@@ -34,34 +34,6 @@ const styles = `
   @keyframes sl-spin {
     to { transform: rotate(360deg); }
   }
-  @keyframes sl-float-a {
-    0%,100% { transform:translateY(0); }
-    50%     { transform:translateY(-2px); }
-  }
-  @keyframes sl-float-b {
-    0%,100% { transform:translateY(0); }
-    50%     { transform:translateY(-2.5px); }
-  }
-  @keyframes sl-progress {
-    0%,8%      { width:12%; }
-    55%,72%    { width:80%; }
-    96%,100%   { width:12%; }
-  }
-  @keyframes sl-drag {
-    0%,34%  { transform:translateX(0) rotate(0deg); border-color:rgba(217,119,6,.3); box-shadow:none; }
-    46%,56% { transform:translateX(4px) rotate(.5deg); border-color:rgba(217,119,6,.65); box-shadow:0 4px 16px rgba(217,119,6,.2); }
-    68%,100%{ transform:translateX(0) rotate(0deg); border-color:rgba(217,119,6,.3); box-shadow:none; }
-  }
-  @keyframes sl-appear {
-    0%,54%    { opacity:0; transform:translateY(5px); }
-    67%,88%   { opacity:1; transform:translateY(0); }
-    98%,100%  { opacity:0; transform:translateY(0); }
-  }
-  @keyframes sl-count-pulse {
-    0%,100% { opacity:1; }
-    50%     { opacity:.45; }
-  }
-
   .sl-fade-1 { animation: sl-fade-up .48s ease both; }
   .sl-fade-2 { animation: sl-fade-up .48s .07s ease both; }
   .sl-fade-3 { animation: sl-fade-up .48s .14s ease both; }
@@ -279,151 +251,6 @@ function OtpBoxes({ value, onChange, disabled }: { value: string; onChange: (v: 
   );
 }
 
-/* ─── Machine art (left panel bottom) ──────────────────── */
-function MachineArt() {
-  return (
-    <div style={{
-      borderRadius: 12,
-      background: '#080808',
-      border: '1px solid rgba(255,255,255,.07)',
-      overflow: 'hidden',
-      flexShrink: 0,
-      position: 'relative',
-    }}>
-      {/* ── Top bar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '9px 13px 8px',
-        borderBottom: '1px solid rgba(255,255,255,.06)',
-        background: 'rgba(255,255,255,.02)',
-      }}>
-        {/* Status dots */}
-        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-          {['#4ade80', 'rgba(255,255,255,.12)', 'rgba(255,255,255,.12)'].map((c, i) => (
-            <div key={i} style={{
-              width: 5, height: 5, borderRadius: '50%', background: c,
-              animation: i === 0 ? 'sl-led 2.5s ease-in-out infinite' : 'none',
-            }} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Kanban columns ── */}
-      <div style={{ display: 'flex', gap: 7, padding: '9px 11px 10px' }}>
-
-        {/* TO DO */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
-            <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(255,255,255,.22)', flexShrink: 0 }} />
-            <span style={{ fontSize: 7.5, fontWeight: 700, color: 'rgba(255,255,255,.25)', letterSpacing: '1.2px', textTransform: 'uppercase' }}>To Do</span>
-          </div>
-          {/* card 1 */}
-          <div style={{
-            background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)',
-            borderRadius: 5, padding: '6px 7px', marginBottom: 5,
-            animation: 'sl-float-a 4s ease-in-out infinite',
-          }}>
-            <div style={{ height: 2.5, width: '82%', background: 'rgba(255,255,255,.18)', borderRadius: 2, marginBottom: 4 }} />
-            <div style={{ height: 2, width: '55%', background: 'rgba(255,255,255,.08)', borderRadius: 1, marginBottom: 5 }} />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ width: 9, height: 9, borderRadius: '50%', background: 'rgba(255,255,255,.1)' }} />
-              <div style={{ height: 2.5, width: 14, borderRadius: 2, background: 'rgba(255,255,255,.08)' }} />
-            </div>
-          </div>
-          {/* card 2 */}
-          <div style={{
-            background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)',
-            borderRadius: 5, padding: '6px 7px',
-            animation: 'sl-float-b 5s ease-in-out infinite .8s',
-          }}>
-            <div style={{ height: 2.5, width: '65%', background: 'rgba(255,255,255,.13)', borderRadius: 2, marginBottom: 4 }} />
-            <div style={{ height: 2, width: '40%', background: 'rgba(255,255,255,.06)', borderRadius: 1 }} />
-          </div>
-        </div>
-
-        {/* IN PROGRESS */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
-            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#d97706', flexShrink: 0, animation: 'sl-led 2.5s ease-in-out infinite .5s' }} />
-            <span style={{ fontSize: 7.5, fontWeight: 700, color: 'rgba(255,255,255,.25)', letterSpacing: '1.2px', textTransform: 'uppercase' }}>Progress</span>
-          </div>
-          {/* dragging card */}
-          <div style={{
-            background: 'rgba(217,119,6,.09)', border: '1px solid rgba(217,119,6,.3)',
-            borderRadius: 5, padding: '6px 7px', marginBottom: 5,
-            animation: 'sl-drag 6s ease-in-out infinite',
-          }}>
-            <div style={{ height: 2.5, width: '88%', background: 'rgba(217,119,6,.6)', borderRadius: 2, marginBottom: 4 }} />
-            <div style={{ height: 2, width: '60%', background: 'rgba(217,119,6,.25)', borderRadius: 1, marginBottom: 5 }} />
-            {/* inline progress */}
-            <div style={{ height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'linear-gradient(90deg,#d97706,#f59e0b)', borderRadius: 2, animation: 'sl-progress 6s ease-in-out infinite' }} />
-            </div>
-          </div>
-          {/* card 2 */}
-          <div style={{
-            background: 'rgba(217,119,6,.05)', border: '1px solid rgba(217,119,6,.2)',
-            borderRadius: 5, padding: '6px 7px',
-            animation: 'sl-float-a 4.5s ease-in-out infinite 1.2s',
-          }}>
-            <div style={{ height: 2.5, width: '70%', background: 'rgba(217,119,6,.4)', borderRadius: 2, marginBottom: 4 }} />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ width: 9, height: 9, borderRadius: '50%', background: 'rgba(217,119,6,.25)' }} />
-              <div style={{ height: 2.5, width: 14, borderRadius: 2, background: 'rgba(217,119,6,.2)' }} />
-            </div>
-          </div>
-        </div>
-
-        {/* DONE */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
-            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80', flexShrink: 0 }} />
-            <span style={{ fontSize: 7.5, fontWeight: 700, color: 'rgba(255,255,255,.25)', letterSpacing: '1.2px', textTransform: 'uppercase' }}>Done</span>
-          </div>
-          {/* existing done card */}
-          <div style={{
-            background: 'rgba(74,222,128,.05)', border: '1px solid rgba(74,222,128,.15)',
-            borderRadius: 5, padding: '6px 7px', marginBottom: 5,
-            animation: 'sl-float-b 5.5s ease-in-out infinite .3s',
-          }}>
-            <div style={{ height: 2.5, width: '76%', background: 'rgba(74,222,128,.4)', borderRadius: 2, marginBottom: 4 }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', border: '1px solid rgba(74,222,128,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: 3, height: 3, background: '#4ade80', borderRadius: '50%' }} />
-              </div>
-              <div style={{ height: 2, width: '55%', background: 'rgba(74,222,128,.15)', borderRadius: 1 }} />
-            </div>
-          </div>
-          {/* appearing card (task just completed) */}
-          <div style={{
-            background: 'rgba(74,222,128,.05)', border: '1px solid rgba(74,222,128,.12)',
-            borderRadius: 5, padding: '6px 7px',
-            animation: 'sl-appear 6s ease-in-out infinite',
-          }}>
-            <div style={{ height: 2.5, width: '60%', background: 'rgba(74,222,128,.3)', borderRadius: 2, marginBottom: 4 }} />
-            <div style={{ height: 2, width: '38%', background: 'rgba(74,222,128,.12)', borderRadius: 1 }} />
-          </div>
-        </div>
-
-      </div>
-
-      {/* ── Bottom stats ── */}
-      <div style={{
-        borderTop: '1px solid rgba(255,255,255,.05)',
-        padding: '7px 13px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <span style={{ fontSize: 8.5, fontWeight: 600, color: 'rgba(255,255,255,.22)', letterSpacing: '.4px' }}>7 tasks</span>
-          <span style={{ fontSize: 8.5, fontWeight: 700, color: '#d97706', letterSpacing: '.4px', animation: 'sl-count-pulse 3s ease-in-out infinite' }}>2 active</span>
-        </div>
-        <div style={{ width: 52, height: 3, background: 'rgba(255,255,255,.08)', borderRadius: 2, overflow: 'hidden' }}>
-          <div style={{ height: '100%', background: 'linear-gradient(90deg,#d97706,#f59e0b)', borderRadius: 2, animation: 'sl-progress 8s ease-in-out infinite' }} />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─── Eye icon ──────────────────────────────────────────── */
 const EyeIcon = ({ open }: { open: boolean }) => open ? (
@@ -613,7 +440,6 @@ export default function Auth() {
             </button>
           </nav>
 
-          <MachineArt />
         </div>
 
         {/* ── RIGHT PANEL ──────────────────────────────────── */}

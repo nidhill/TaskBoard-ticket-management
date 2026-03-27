@@ -1,0 +1,76 @@
+import api from './api';
+
+export interface LoginData {
+    email: string;
+    password: string;
+}
+
+export interface RegisterData {
+    name: string;
+    email: string;
+    password: string;
+    department: string;
+    role?: string;
+}
+
+export interface UserResponse {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    department: string;
+    avatar_url?: string;
+    notifications?: {
+        email: boolean;
+        pageApproval: boolean;
+        ticketUpdates: boolean;
+        ticketLimit: boolean;
+    };
+}
+
+export const authService = {
+    async login(data: LoginData, rememberMe = true) {
+        const response = await api.post('/auth/login', data);
+        const storage = rememberMe ? localStorage : sessionStorage;
+        if (response.data.token) storage.setItem('token', response.data.token);
+        if (response.data.refreshToken) storage.setItem('refreshToken', response.data.refreshToken);
+        return response.data;
+    },
+
+    async register(data: RegisterData) {
+        const response = await api.post('/auth/register', data);
+        if (response.data.token) localStorage.setItem('token', response.data.token);
+        if (response.data.refreshToken) localStorage.setItem('refreshToken', response.data.refreshToken);
+        return response.data;
+    },
+
+    async getCurrentUser(): Promise<UserResponse> {
+        const response = await api.get('/auth/me');
+        return response.data.user;
+    },
+
+    async updateProfile(id: string, data: Partial<UserResponse>) {
+        const response = await api.put(`/users/${id}`, data);
+        return response.data;
+    },
+
+    async verifyEmail(email: string, otp: string) {
+        const response = await api.post('/auth/verify-email', { email, otp });
+        if (response.data.token) localStorage.setItem('token', response.data.token);
+        if (response.data.refreshToken) localStorage.setItem('refreshToken', response.data.refreshToken);
+        return response.data;
+    },
+
+    async resendVerification(email: string) {
+        const response = await api.post('/auth/resend-verification', { email });
+        return response.data;
+    },
+
+    async logout() {
+        try { await api.post('/auth/logout'); } catch (_) {}
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('refreshToken');
+    },
+};

@@ -1,0 +1,34 @@
+import { ReactNode } from 'react';
+import { Sidebar } from './Sidebar';
+import { CommandPalette } from './CommandPalette';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { useAutoLogout } from '@/hooks/useAutoLogout';
+
+interface MainLayoutProps {
+  children: ReactNode;
+}
+
+export function MainLayout({ children }: MainLayoutProps) {
+  usePageTitle();
+  useAutoLogout();
+
+  return (
+    <SidebarProvider>
+      <CommandPalette />
+      <Sidebar />
+      <SidebarInset>
+        {/* Mobile-only top bar */}
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 backdrop-blur px-5 sticky top-0 z-10 md:hidden">
+          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+          <Separator orientation="vertical" className="mr-2 h-4 bg-border" />
+          <span style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }} className="font-bold text-sm tracking-tight text-foreground">Slate</span>
+        </header>
+        <div className="flex-1 p-7 lg:p-10">
+          {children}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}

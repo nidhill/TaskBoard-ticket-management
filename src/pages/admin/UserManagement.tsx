@@ -116,9 +116,7 @@ export default function UserManagement() {
 
     setIsUpdating(true);
     try {
-      console.log('Updating role for user:', selectedUser.id, 'to:', newRole);
       const response = await api.put(`/users/${selectedUser.id}/role`, { role: newRole });
-      console.log('Role update response:', response.data);
 
       toast({
         title: 'Role Updated',

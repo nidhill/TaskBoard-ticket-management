@@ -95,7 +95,6 @@ export default function Tasks() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { role, user } = useAuth();
-  console.log('Current User in Pages:', user);
   const permissions = usePermissions();
   const { toast } = useToast();
 
@@ -140,10 +139,10 @@ export default function Tasks() {
       const response = await api.get('/tasks');
       setTasks(response.data.tasks || []);
     } catch (error: any) {
-      console.error('Error fetching pages:', error);
+      console.error('Error fetching tasks:', error);
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Failed to load pages',
+        description: error.response?.data?.message || 'Failed to load tasks',
         variant: 'destructive',
       });
     } finally {

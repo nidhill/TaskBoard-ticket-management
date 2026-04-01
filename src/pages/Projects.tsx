@@ -94,7 +94,6 @@ export default function Projects() {
     try {
       setLoading(true);
       const response = await api.get('/projects');
-      console.log('Projects API Response:', response.data);
       setProjects(response.data.projects || []);
     } catch (error: any) {
       console.error('Error fetching projects:', error);

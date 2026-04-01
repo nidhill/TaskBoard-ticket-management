@@ -97,7 +97,6 @@ export default function Pages() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { role, user } = useAuth();
-  console.log('Current User in Pages:', user);
   const permissions = usePermissions();
   const { toast } = useToast();
 

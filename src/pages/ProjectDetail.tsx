@@ -427,13 +427,6 @@ export default function ProjectDetail() {
     (typeof project.createdBy === 'object' && (project.createdBy as any)._id === user.id)
   );
 
-  console.log('Project Deletion Debug:', {
-    projectCreatedBy: project?.createdBy,
-    userId: user?.id,
-    isCreator,
-    canDelete: permissions.canDeleteProject
-  });
-
   return (
     <MainLayout>
       <div className="mb-6">
